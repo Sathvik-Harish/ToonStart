@@ -21,7 +21,7 @@
             box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
             width: 100%;
             height: 100%;
-            touch-action: none;
+            touch-action: none; /* Prevents default touch actions like scrolling/zooming */
         }
         .flex-grow-container {
             flex-grow: 1;
@@ -218,7 +218,7 @@
             <p class="text-gray-600 mb-4">
                 Describe what kind of idea you're looking for, e.g., "a character running through a forest," or "a magical creature appearing."
             </p>
-            <input type="text" id="ideaPromptInput" placeholder="Enter your prompt here..." class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="text" id="ideaPromptInput" placeholder="Enter your prompt here..." class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:focus:ring-blue-500">
             <button id="getIdeaBtn" class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200">
                 Get Idea
             </button>
@@ -428,40 +428,66 @@
         }
         // --- End History Management ---
 
+        // Unified event handler for mouse and touch start
         function startDrawing(e) {
+            e.preventDefault(); // Prevent scrolling/zooming on touch devices
+
+            const rect = canvas.getBoundingClientRect();
+            let clientX, clientY;
+
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            const offsetX = clientX - rect.left;
+            const offsetY = clientY - rect.top;
+
             if (tool === 'fill') {
-                const rect = canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                floodFill(x, y, hexToRgba(brushColor));
+                floodFill(offsetX, offsetY, hexToRgba(brushColor));
                 saveCurrentFrame();
                 renderCanvasContent();
                 saveState(); 
                 return;
             }
 
-            const rect = canvas.getBoundingClientRect();
-            const offsetX = e.clientX - rect.left;
-            const offsetY = e.clientY - rect.top;
-
             context.beginPath();
             context.moveTo(offsetX, offsetY);
             isDrawing = true;
         }
 
+        // Unified event handler for mouse and touch move
         function draw(e) {
+            e.preventDefault(); // Prevent scrolling/zooming on touch devices
+
             if (!isDrawing) return;
 
             const rect = canvas.getBoundingClientRect();
-            const offsetX = e.clientX - rect.left;
-            const offsetY = e.clientY - rect.top;
+            let clientX, clientY;
+
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            const offsetX = clientX - rect.left;
+            const offsetY = clientY - rect.top;
 
             context.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
             context.lineTo(offsetX, offsetY);
             context.stroke();
         }
 
-        function stopDrawing() {
+        // Unified event handler for mouse and touch end/cancel
+        function stopDrawing(e) {
+            e.preventDefault(); // Prevent default touch actions
+
             if (tool !== 'fill') {
                 context.closePath();
                 isDrawing = false;
@@ -765,8 +791,7 @@
                 let chatHistory = [];
                 chatHistory.push({ role: "user", parts: [{ text: `Generate a creative drawing idea for an animation frame based on this prompt: "${prompt}". Keep it concise and focused on visual elements."` }] });
                 const payload = { contents: chatHistory };
-                // IMPORTANT: Replace "YOUR_API_KEY_HERE" with your actual Google Cloud/Gemini API Key
-                const apiKey = ""; // REMINDER: Replace with your actual API Key!
+                const apiKey = ""; 
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
                 const response = await fetch(apiUrl, {
@@ -864,10 +889,17 @@
                 context.lineWidth = brushSize;
             });
 
+            // Event listeners for mouse
             canvas.addEventListener('mousedown', startDrawing);
             canvas.addEventListener('mousemove', draw);
             canvas.addEventListener('mouseup', stopDrawing);
             canvas.addEventListener('mouseleave', stopDrawing);
+
+            // Event listeners for touch
+            canvas.addEventListener('touchstart', startDrawing);
+            canvas.addEventListener('touchmove', draw);
+            canvas.addEventListener('touchend', stopDrawing);
+            canvas.addEventListener('touchcancel', stopDrawing); // Handle when touch is interrupted
 
             addFrameBtn.addEventListener('click', addFrame);
             deleteFrameBtn.addEventListener('click', deleteFrame);
