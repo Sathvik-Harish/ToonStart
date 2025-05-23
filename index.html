@@ -81,6 +81,27 @@
             flex-grow: 1;
             min-width: 50px;
         }
+        .zoom-info {
+            font-size: 0.875rem; /* Adjusted font size for better readability in modal */
+            color: #4b5563; /* Darker gray for better contrast */
+            line-height: 1.5;
+        }
+        .zoom-info ul {
+            padding-left: 1.25rem; /* Indent list items */
+        }
+        .zoom-info kbd {
+            display: inline-block;
+            padding: 0.1rem 0.4rem;
+            font-size: 0.875em;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            line-height: 1;
+            color: #4a5568;
+            background-color: #edf2f7;
+            border: 1px solid #cbd5e0;
+            border-bottom-color: #a0aec0;
+            border-radius: 0.25rem;
+            box-shadow: inset 0 -1px 0 #a0aec0;
+        }
     </style>
 </head>
 <body class="h-screen bg-gray-100 flex flex-col items-center p-4 sm:p-6 md:p-8">
@@ -97,7 +118,7 @@
                 <div class="toolbox-section">
                     <h2>Tools</h2>
                     <div class="flex flex-wrap gap-1">
-                        <button id="brushTool" class="tool-button bg-blue-600 text-white shadow-md">✏️</button>
+                        <button id="brushTool" class="tool-button bg-blue-600 text-white shadow-md">✎</button>
                         <button id="eraserTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">🩹</button>
                         <button id="fillTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">🪣</button>
                     </div>
@@ -116,17 +137,25 @@
                 <div class="toolbox-section">
                     <h2>Frames</h2>
                     <div class="flex flex-col space-y-1">
-                        <button id="addFrame" class="bg-blue-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-blue-600 text-sm">➕ Frame</button>
-                        <button id="deleteFrame" class="bg-red-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-red-600 text-sm">❎ Frame</button>
+                        <button id="addFrame" class="bg-blue-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-blue-600 text-sm">Add New</button>
+                        <button id="deleteFrame" class="bg-red-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-red-600 text-sm">Delete</button>
                         <button id="duplicateFrame" class="bg-green-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-green-600 text-sm">Duplicate</button>
-                        <button id="clearCurrentFrame" class="bg-orange-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-orange-600 text-sm">Remove</button>
+                        <button id="clearCurrentFrame" class="bg-orange-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-orange-600 text-sm">Clear</button>
+                    </div>
+                </div>
+
+                <div class="toolbox-section">
+                    <h2>History</h2>
+                    <div class="flex flex-col space-y-1">
+                        <button id="undoBtn" class="bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-400 text-sm" disabled>↩️ Undo</button>
+                        <button id="redoBtn" class="bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-400 text-sm" disabled>↪️ Redo</button>
                     </div>
                 </div>
 
                 <div class="toolbox-section">
                     <h2>Project</h2>
                     <div class="flex flex-col space-y-1">
-                        <button id="saveProject" class="bg-indigo-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-indigo-600 text-sm">💾 Save</button>
+                        <button id="saveProject" class="bg-indigo-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-indigo-600 text-sm">Save</button>
                         <button id="loadProject" class="bg-purple-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-purple-600 text-sm">Load</button>
                         <button id="exportGif" class="bg-teal-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-teal-600 text-sm">
                             🖼️ Export GIF
@@ -137,7 +166,14 @@
                 <div class="toolbox-section">
                     <h2>Ideas</h2>
                     <button id="generateIdeaBtn" class="bg-yellow-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-yellow-600 text-sm w-full">
-                        ✨ Generate Idea 💡
+                        ✨ Generate Idea
+                    </button>
+                </div>
+
+                <div class="toolbox-section">
+                    <h2>Help</h2>
+                    <button id="helpBtn" class="bg-gray-400 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-500 text-sm w-full">
+                        ❓ Help
                     </button>
                 </div>
             </div>
@@ -198,9 +234,35 @@
         </div>
     </div>
 
-    <script>
-        // All onion skin variables and constants removed
+    <div id="helpModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">❓ Help & View Tips</h3>
+            <p class="zoom-info mb-4">
+                If parts of the editor content appear cut off or you want to see more, you can adjust your browser's zoom level:
+            </p>
+            <ul class="zoom-info list-disc list-inside space-y-2">
+                <li>
+                    <span class="font-semibold">Zoom Out:</span>
+                    <br>
+                    <kbd>Cmd</kbd> + <kbd>-</kbd> (Mac)
+                    <br>
+                    <kbd>Ctrl</kbd> + <kbd>-</kbd> (Windows)
+                </li>
+                <li>
+                    <span class="font-semibold">Reset Zoom to 100%:</span>
+                    <br>
+                    <kbd>Cmd</kbd> + <kbd>0</kbd> (Mac)
+                    <br>
+                    <kbd>Ctrl</kbd> + <kbd>0</kbd> (Windows)
+                </li>
+            </ul>
+            <button id="closeHelpModalBtn" class="mt-6 w-full bg-gray-300 text-gray-800 px-4 py-3 rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-200">
+                Close
+            </button>
+        </div>
+    </div>
 
+    <script>
         const canvas = document.getElementById('drawingCanvas');
         const context = canvas.getContext('2d');
         const messageDisplay = document.getElementById('messageDisplay');
@@ -229,8 +291,6 @@
 
         const timelineDiv = document.getElementById('timeline');
 
-        // onionSkinEnabledCheckbox and related controls removed
-
         const generateIdeaBtn = document.getElementById('generateIdeaBtn');
         const ideaModal = document.getElementById('ideaModal');
         const ideaPromptInput = document.getElementById('ideaPromptInput');
@@ -238,6 +298,13 @@
         const generatedIdeaOutput = document.getElementById('generatedIdeaOutput');
         const ideaText = document.getElementById('ideaText');
         const closeIdeaModalBtn = document.getElementById('closeIdeaModalBtn');
+
+        const helpBtn = document.getElementById('helpBtn');
+        const helpModal = document.getElementById('helpModal');
+        const closeHelpModalBtn = document.getElementById('closeHelpModalBtn');
+
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
 
         let isDrawing = false;
         let brushColor = '#000000';
@@ -253,6 +320,11 @@
 
         let isExporting = false;
         let exportProgress = 0;
+
+        // History for Undo/Redo
+        let history = [];
+        let historyPointer = -1;
+        const MAX_HISTORY_STATES = 50; 
 
         function showMessage(msg) {
             messageDisplay.textContent = msg;
@@ -272,7 +344,6 @@
             return [r, g, b, 255];
         }
 
-        // Helper function to load an image and return a Promise
         const loadImage = (src) => {
             return new Promise((resolve, reject) => {
                 const img = new Image();
@@ -282,10 +353,9 @@
             });
         };
 
-        // Main rendering function: now only draws the current frame
         async function renderCanvasContent() {
             context.clearRect(0, 0, canvas.width, canvas.height);
-            context.fillStyle = '#ffffff'; // Ensure background is white
+            context.fillStyle = '#ffffff';
             context.fillRect(0, 0, canvas.width, canvas.height);
 
             const currentFrameData = frames[currentFrameIndex];
@@ -299,17 +369,14 @@
                     context.restore();
                 } catch (error) {
                     console.error("Error loading current frame image data:", error);
-                    // If current frame fails to load, ensure canvas is white
                     context.fillStyle = '#ffffff';
                     context.fillRect(0, 0, canvas.width, canvas.height);
                 }
             } else {
-                // If no valid current frame data, ensure canvas is white
                 context.fillStyle = '#ffffff';
                 context.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            // Reset context properties for drawing tools after all rendering is done
             context.globalAlpha = 1.0;
             context.globalCompositeOperation = 'source-over';
         }
@@ -317,6 +384,49 @@
         function saveCurrentFrame() {
             frames[currentFrameIndex] = canvas.toDataURL('image/png');
         }
+
+        // --- History Management ---
+        function saveState() {
+            if (historyPointer < history.length - 1) {
+                history = history.slice(0, historyPointer + 1);
+            }
+            history.push(JSON.parse(JSON.stringify(frames)));
+            historyPointer++;
+
+            if (history.length > MAX_HISTORY_STATES) {
+                history.shift();
+                historyPointer--;
+            }
+            updateUndoRedoButtons();
+        }
+
+        function undo() {
+            if (historyPointer > 0) {
+                historyPointer--;
+                frames = JSON.parse(JSON.stringify(history[historyPointer]));
+                renderCanvasContent();
+                updateTimeline();
+                updateUndoRedoButtons();
+                showMessage('Undo successful!');
+            }
+        }
+
+        function redo() {
+            if (historyPointer < history.length - 1) {
+                historyPointer++;
+                frames = JSON.parse(JSON.stringify(history[historyPointer]));
+                renderCanvasContent();
+                updateTimeline();
+                updateUndoRedoButtons();
+                showMessage('Redo successful!');
+            }
+        }
+
+        function updateUndoRedoButtons() {
+            undoBtn.disabled = !(historyPointer > 0);
+            redoBtn.disabled = !(historyPointer < history.length - 1);
+        }
+        // --- End History Management ---
 
         function startDrawing(e) {
             if (tool === 'fill') {
@@ -326,6 +436,7 @@
                 floodFill(x, y, hexToRgba(brushColor));
                 saveCurrentFrame();
                 renderCanvasContent();
+                saveState(); 
                 return;
             }
 
@@ -333,8 +444,6 @@
             const offsetX = e.clientX - rect.left;
             const offsetY = e.clientY - rect.top;
 
-            // Start a new path for drawing. The existing canvas content (from renderCanvasContent)
-            // will remain, and the new stroke will be drawn on top.
             context.beginPath();
             context.moveTo(offsetX, offsetY);
             isDrawing = true;
@@ -356,9 +465,10 @@
             if (tool !== 'fill') {
                 context.closePath();
                 isDrawing = false;
-                context.globalCompositeOperation = 'source-over'; // Reset to default after drawing
-                saveCurrentFrame(); // Save the frame *after* the drawing is complete on the canvas
-                renderCanvasContent(); // Re-render the canvas to show the saved frame
+                context.globalCompositeOperation = 'source-over';
+                saveCurrentFrame();
+                renderCanvasContent();
+                saveState(); 
             }
         }
 
@@ -444,7 +554,7 @@
             saveCurrentFrame();
 
             context.clearRect(0, 0, canvas.width, canvas.height);
-            context.fillStyle = '#ffffff'; // Ensure new frame is white
+            context.fillStyle = '#ffffff';
             context.fillRect(0, 0, canvas.width, canvas.height);
             const blankCanvasData = canvas.toDataURL('image/png');
 
@@ -452,6 +562,7 @@
             currentFrameIndex++;
             renderCanvasContent();
             updateTimeline();
+            saveState(); 
             showMessage('New frame added!');
         }
 
@@ -466,6 +577,7 @@
             }
             renderCanvasContent();
             updateTimeline();
+            saveState(); 
             showMessage('Frame deleted!');
         }
 
@@ -475,6 +587,7 @@
             currentFrameIndex++;
             renderCanvasContent();
             updateTimeline();
+            saveState(); 
             showMessage('Frame duplicated!');
         }
 
@@ -482,6 +595,7 @@
             context.clearRect(0, 0, canvas.width, canvas.height);
             saveCurrentFrame();
             renderCanvasContent();
+            saveState(); 
             showMessage('Current frame cleared!');
         }
 
@@ -508,6 +622,10 @@
                     currentFrameIndex = Math.min(parseInt(savedIndex, 10) || 0, frames.length - 1);
                     renderCanvasContent();
                     updateTimeline();
+                    
+                    history = [];
+                    historyPointer = -1;
+                    saveState();
                     showMessage('Animation project loaded!');
                 } else {
                     showMessage('Saved project data is corrupt or empty.');
@@ -527,7 +645,7 @@
 
             isPlaying = true;
             
-            renderCanvasContent(); // Immediately render to show only the current frame
+            renderCanvasContent();
 
             const interval = 1000 / animationSpeed;
             animationInterval = setInterval(() => {
@@ -645,9 +763,10 @@
 
             try {
                 let chatHistory = [];
-                chatHistory.push({ role: "user", parts: [{ text: `Generate a creative drawing idea for an animation frame based on this prompt: "${prompt}". Keep it concise and focused on visual elements.` }] });
+                chatHistory.push({ role: "user", parts: [{ text: `Generate a creative drawing idea for an animation frame based on this prompt: "${prompt}". Keep it concise and focused on visual elements."` }] });
                 const payload = { contents: chatHistory };
-                const apiKey = "";
+                // IMPORTANT: Replace "YOUR_API_KEY_HERE" with your actual Google Cloud/Gemini API Key
+                const apiKey = ""; // REMINDER: Replace with your actual API Key!
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
                 const response = await fetch(apiUrl, {
@@ -694,6 +813,7 @@
             frames.push(canvas.toDataURL('image/png'));
             updateTimeline();
             renderCanvasContent();
+            saveState(); // Save initial blank frame to history
 
             brushToolBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
             brushToolBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
@@ -770,8 +890,6 @@
                 }
             });
 
-            // onionSkinEnabledCheckbox and its event listener removed
-
             generateIdeaBtn.addEventListener('click', () => {
                 ideaModal.classList.remove('hidden');
                 generatedIdeaOutput.classList.add('hidden');
@@ -783,26 +901,32 @@
             });
             getIdeaBtn.addEventListener('click', generateFrameIdea);
 
+            helpBtn.addEventListener('click', () => {
+                helpModal.classList.remove('hidden');
+            });
+            closeHelpModalBtn.addEventListener('click', () => {
+                helpModal.classList.add('hidden');
+            });
+
+            undoBtn.addEventListener('click', undo);
+            redoBtn.addEventListener('click', redo);
+
             window.addEventListener('resize', () => {
-                // Save current frame content before resizing
                 const currentFrameData = canvas.toDataURL('image/png');
                 
-                // Adjust canvas dimensions to fit its parent container
                 canvas.width = canvas.offsetWidth;
                 canvas.height = canvas.offsetHeight;
 
-                // Redraw the saved content onto the resized canvas
                 const img = new Image();
                 img.src = currentFrameData;
                 img.onload = () => {
                     context.clearRect(0, 0, canvas.width, canvas.height);
                     context.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    // Reapply drawing styles
                     context.lineCap = 'round';
                     context.lineJoin = 'round';
                     context.strokeStyle = brushColor;
                     context.lineWidth = brushSize;
-                    renderCanvasContent(); // Re-render the canvas
+                    renderCanvasContent();
                 };
             });
         };
