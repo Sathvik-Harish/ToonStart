@@ -12,27 +12,74 @@
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 0;
-            overflow: hidden; /* Prevent body scrolling */
+            overflow: hidden;
         }
-        /* Custom styles for canvas to ensure it fills space */
         #drawingCanvas {
             background-color: #ffffff;
-            border: 2px solid #e2e8f0; /* gray-300 */
-            border-radius: 0.75rem; /* rounded-lg */
-            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06); /* shadow-inner */
+            border: 2px solid #e2e8f0;
+            border-radius: 0.75rem;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
             width: 100%;
             height: 100%;
-            touch-action: none; /* Prevent default touch actions like scrolling/zooming */
+            touch-action: none;
         }
-        /* Ensure the main content area takes up remaining height */
         .flex-grow-container {
             flex-grow: 1;
-            min-height: 0; /* Allow flex item to shrink */
+            min-height: 0;
         }
         .overflow-y-auto-custom {
             overflow-y: auto;
-            /* Optional: Add max-height if you want to limit how much it grows before scrolling */
-            /* max-height: calc(100vh - 150px); Adjust based on header/footer height */
+        }
+        #staticToolbox {
+            flex-shrink: 0;
+            width: 256px;
+            background-color: #f9fafb;
+            border-right: 1px solid #e5e7eb;
+            padding: 1rem;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .toolbox-section {
+            padding-top: 0.75rem;
+            margin-top: 0.75rem;
+            border-top: 1px solid #e5e7eb;
+        }
+        .toolbox-section:first-child {
+            border-top: none;
+            padding-top: 0;
+            margin-top: 0;
+        }
+        .toolbox-section h2 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #4b5563;
+            margin-bottom: 0.75rem;
+        }
+        .toolbox-section label {
+            font-size: 0.875rem;
+            color: #4b5563;
+            margin-bottom: 0.25rem;
+            display: block;
+        }
+        .toolbox-section input[type="range"] {
+            width: 100%;
+            height: 0.5rem;
+        }
+        .toolbox-section input[type="color"] {
+            width: 100%;
+            height: 2.5rem;
+        }
+        .tool-button {
+            padding: 0.625rem 0.75rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            font-size: 1.5rem;
+            line-height: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+            min-width: 50px;
         }
     </style>
 </head>
@@ -44,97 +91,90 @@
 
     <div id="messageDisplay" class="hidden bg-blue-500 text-white px-4 py-2 rounded-lg mb-4 shadow-md transition-opacity duration-500 opacity-0"></div>
 
-    <div class="flex flex-col md:flex-row w-full max-w-6xl bg-white rounded-xl shadow-lg overflow-hidden flex-grow flex-grow-container">
-        <div class="w-full md:w-1/4 lg:w-1/5 bg-gray-50 p-4 sm:p-6 border-b md:border-b-0 md:border-r border-gray-200 flex flex-col space-y-4 overflow-y-auto-custom">
-            <h2 class="text-xl font-semibold text-gray-700 mb-2">Tools</h2>
-
-            <div class="flex flex-wrap gap-2 mb-4">
-                <button id="brushTool" class="flex-1 min-w-[100px] px-4 py-2 rounded-lg transition-all duration-200 text-2xl bg-blue-600 text-white shadow-md">
-                    ✏️
-                </button>
-                <button id="eraserTool" class="flex-1 min-w-[100px] px-4 py-2 rounded-lg transition-all duration-200 text-2xl bg-gray-200 text-gray-700 hover:bg-blue-100">
-                    🩹
-                </button>
-                <button id="fillTool" class="flex-1 min-w-[100px] px-4 py-2 rounded-lg transition-all duration-200 text-2xl bg-gray-200 text-gray-700 hover:bg-blue-100">
-                    🪣
-                </button>
-            </div>
-
-            <div class="flex flex-col">
-                <label for="brushColor" class="text-gray-700 font-medium mb-2">Brush Color:</label>
-                <input type="color" id="brushColor" value="#000000" class="w-full h-10 rounded-lg border-2 border-gray-300 cursor-pointer">
-            </div>
-
-            <div class="flex flex-col">
-                <label for="brushSize" class="text-gray-700 font-medium mb-2">Brush Size: <span id="brushSizeValue" class="font-bold">5px</span></label>
-                <input type="range" id="brushSize" min="1" max="50" value="5" class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
-            </div>
-
-            <div class="flex flex-col space-y-2 pt-4 border-t border-gray-200">
-                <h2 class="text-xl font-semibold text-gray-700 mb-2">Frame Actions</h2>
-                <button id="addFrame" class="bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-600 transition-colors duration-200">
-                    Add New Frame
-                </button>
-                <button id="deleteFrame" class="bg-red-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-red-600 transition-colors duration-200">
-                    Delete Current Frame
-                </button>
-                <button id="duplicateFrame" class="bg-green-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-green-600 transition-colors duration-200">
-                    Duplicate Current Frame
-                </button>
-                <button id="clearCurrentFrame" class="bg-orange-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-orange-600 transition-colors duration-200">
-                    Clear Current Frame
-                </button>
-            </div>
-
-            <div class="flex flex-col space-y-2 pt-4 border-t border-gray-200">
-                <h2 class="text-xl font-semibold text-gray-700 mb-2">Project Actions</h2>
-                <button id="saveProject" class="bg-indigo-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-indigo-600 transition-colors duration-200">
-                    Save Project
-                </button>
-                <button id="loadProject" class="bg-purple-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-purple-600 transition-colors duration-200">
-                    Load Project
-                </button>
-                <button id="exportGif" class="bg-teal-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-teal-600 transition-colors duration-200">
-                    🖼️ Export GIF
-                </button>
-            </div>
-
-            <div class="flex flex-col space-y-2 pt-4 border-t border-gray-200">
-                <h2 class="text-xl font-semibold text-gray-700 mb-2">Onion Skinning</h2>
-                <label class="flex items-center space-x-2 cursor-pointer">
-                    <input type="checkbox" id="onionSkinEnabled" class="form-checkbox h-5 w-5 text-blue-600 rounded">
-                    <span class="text-gray-700">Enable Onion Skin</span>
-                </label>
-
-                <div id="onionSkinControls" class="space-y-2" style="display: none;">
-                    <div class="flex flex-col">
-                        <label for="onionPrev" class="text-gray-700 font-medium mb-1">Previous Frames: <span id="onionPrevValue" class="font-bold">1</span></label>
-                        <input type="range" id="onionPrev" min="0" max="5" value="1" class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
-                    </div>
-                    <div class="flex flex-col">
-                        <label for="onionNext" class="text-gray-700 font-medium mb-1">Next Frames: <span id="onionNextValue" class="font-bold">1</span></label>
-                        <input type="range" id="onionNext" min="0" max="5" value="1" class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
-                    </div>
-                    <div class="flex flex-col">
-                        <label for="onionOpacity" class="text-gray-700 font-medium mb-1">Opacity: <span id="onionOpacityValue" class="font-bold">30%</span></label>
-                        <input type="range" id="onionOpacity" min="0.1" max="0.8" step="0.05" value="0.3" class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
-                    </div>
-                    <div class="flex flex-col">
-                        <label for="onionSkinColor" class="text-gray-700 font-medium mb-1">Onion Skin Color:</label>
-                        <input type="color" id="onionSkinColor" value="#ff0000" class="w-full h-10 rounded-lg border-2 border-gray-300 cursor-pointer">
+    <div class="flex w-full max-w-6xl bg-white rounded-xl shadow-lg overflow-hidden flex-grow flex-grow-container">
+        <div id="staticToolbox">
+            <div class="flex flex-col space-y-4">
+                <div class="toolbox-section">
+                    <h2>Tools</h2>
+                    <div class="flex flex-wrap gap-1">
+                        <button id="brushTool" class="tool-button bg-blue-600 text-white shadow-md">✏️</button>
+                        <button id="eraserTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">🩹</button>
+                        <button id="fillTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">🪣</button>
                     </div>
                 </div>
-            </div>
 
-            <div class="flex flex-col space-y-2 pt-4 border-t border-gray-200">
-                <h2 class="text-xl font-semibold text-gray-700 mb-2">Creative Ideas</h2>
-                <button id="generateIdeaBtn" class="bg-yellow-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-yellow-600 transition-colors duration-200">
-                    ✨ Generate Frame Idea
-                </button>
+                <div class="toolbox-section">
+                    <label for="brushColor">Brush Color:</label>
+                    <input type="color" id="brushColor" value="#000000" class="rounded-lg border-2 border-gray-300 cursor-pointer">
+                </div>
+
+                <div class="toolbox-section">
+                    <label for="brushSize">Size: <span id="brushSizeValue" class="font-bold">5px</span></label>
+                    <input type="range" id="brushSize" min="1" max="50" value="5" class="bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                </div>
+
+                <div class="toolbox-section">
+                    <h2>Frames</h2>
+                    <div class="flex flex-col space-y-1">
+                        <button id="addFrame" class="bg-blue-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-blue-600 text-sm">Add New</button>
+                        <button id="deleteFrame" class="bg-red-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-red-600 text-sm">Delete</button>
+                        <button id="duplicateFrame" class="bg-green-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-green-600 text-sm">Duplicate</button>
+                        <button id="clearCurrentFrame" class="bg-orange-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-orange-600 text-sm">Clear</button>
+                    </div>
+                </div>
+
+                <div class="toolbox-section">
+                    <h2>Project</h2>
+                    <div class="flex flex-col space-y-1">
+                        <button id="saveProject" class="bg-indigo-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-indigo-600 text-sm">Save</button>
+                        <button id="loadProject" class="bg-purple-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-purple-600 text-sm">Load</button>
+                        <button id="exportGif" class="bg-teal-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-teal-600 text-sm">
+                            🖼️ Export GIF
+                        </button>
+                    </div>
+                </div>
+
+                <div class="toolbox-section">
+                    <h2>Onion Skin</h2>
+                    <label class="flex items-center space-x-2 cursor-pointer text-sm mb-2">
+                        <input type="checkbox" id="onionSkinEnabled" class="form-checkbox h-4 w-4 text-blue-600 rounded">
+                        <span class="text-gray-700">Enable</span>
+                    </label>
+
+                    <div id="onionSkinControls" class="space-y-2" style="display: none;">
+                        <div class="flex flex-col">
+                            <label for="onionPrev" class="text-gray-700 font-medium mb-0.5 text-xs">Prev Count: <span id="onionPrevValue" class="font-bold">1</span></label>
+                            <input type="range" id="onionPrev" min="0" max="5" value="1" class="bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div class="flex flex-col">
+                            <label for="onionNext" class="text-gray-700 font-medium mb-0.5 text-xs">Next Count: <span id="onionNextValue" class="font-bold">1</span></label>
+                            <input type="range" id="onionNext" min="0" max="5" value="1" class="bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div class="flex flex-col">
+                            <label for="onionOpacity" class="text-gray-700 font-medium mb-0.5 text-xs">Opacity: <span id="onionOpacityValue" class="font-bold">30%</span></label>
+                            <input type="range" id="onionOpacity" min="0.1" max="0.8" step="0.05" value="0.3" class="bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div class="flex flex-col">
+                            <label for="onionPrevColor" class="text-gray-700 font-medium mb-0.5 text-xs">Prev Color:</label>
+                            <input type="color" id="onionPrevColor" value="#ff0000" class="rounded-lg border-2 border-gray-300 cursor-pointer">
+                        </div>
+                        <div class="flex flex-col">
+                            <label for="onionNextColor" class="text-gray-700 font-medium mb-0.5 text-xs">Next Color:</label>
+                            <input type="color" id="onionNextColor" value="#0000ff" class="rounded-lg border-2 border-gray-300 cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="toolbox-section">
+                    <h2>Ideas</h2>
+                    <button id="generateIdeaBtn" class="bg-yellow-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-yellow-600 text-sm w-full">
+                        ✨ Generate Idea
+                    </button>
+                </div>
             </div>
         </div>
 
-        <div class="w-full md:w-3/4 lg:w-4/5 p-4 sm:p-6 flex flex-col relative flex-grow">
+        <div class="flex flex-col relative flex-grow p-4 sm:p-6">
             <div class="flex-grow flex justify-center items-center relative">
                 <canvas id="drawingCanvas"></canvas>
             </div>
@@ -194,7 +234,6 @@
         const context = canvas.getContext('2d');
         const messageDisplay = document.getElementById('messageDisplay');
 
-        // Tool elements
         const brushToolBtn = document.getElementById('brushTool');
         const eraserToolBtn = document.getElementById('eraserTool');
         const fillToolBtn = document.getElementById('fillTool');
@@ -202,28 +241,23 @@
         const brushSizeInput = document.getElementById('brushSize');
         const brushSizeValueSpan = document.getElementById('brushSizeValue');
 
-        // Frame action buttons
         const addFrameBtn = document.getElementById('addFrame');
         const deleteFrameBtn = document.getElementById('deleteFrame');
         const duplicateFrameBtn = document.getElementById('duplicateFrame');
         const clearCurrentFrameBtn = document.getElementById('clearCurrentFrame');
 
-        // Project action buttons
         const saveProjectBtn = document.getElementById('saveProject');
         const loadProjectBtn = document.getElementById('loadProject');
         const exportGifBtn = document.getElementById('exportGif');
 
-        // Playback elements
         const playBtn = document.getElementById('playBtn');
         const pauseBtn = document.getElementById('pauseBtn');
         const stopBtn = document.getElementById('stopBtn');
         const animationSpeedInput = document.getElementById('animationSpeed');
         const animationSpeedValueSpan = document.getElementById('animationSpeedValue');
 
-        // Timeline element
         const timelineDiv = document.getElementById('timeline');
 
-        // Onion Skin elements
         const onionSkinEnabledCheckbox = document.getElementById('onionSkinEnabled');
         const onionSkinControlsDiv = document.getElementById('onionSkinControls');
         const onionPrevInput = document.getElementById('onionPrev');
@@ -232,9 +266,9 @@
         const onionNextValueSpan = document.getElementById('onionNextValue');
         const onionOpacityInput = document.getElementById('onionOpacity');
         const onionOpacityValueSpan = document.getElementById('onionOpacityValue');
-        const onionSkinColorInput = document.getElementById('onionSkinColor');
+        const onionPrevColorInput = document.getElementById('onionPrevColor');
+        const onionNextColorInput = document.getElementById('onionNextColor');
 
-        // Idea Generator elements
         const generateIdeaBtn = document.getElementById('generateIdeaBtn');
         const ideaModal = document.getElementById('ideaModal');
         const ideaPromptInput = document.getElementById('ideaPromptInput');
@@ -243,31 +277,27 @@
         const ideaText = document.getElementById('ideaText');
         const closeIdeaModalBtn = document.getElementById('closeIdeaModalBtn');
 
-
-        // State variables
         let isDrawing = false;
         let brushColor = '#000000';
         let brushSize = 5;
-        let tool = 'brush'; // 'brush', 'eraser', 'fill'
+        let tool = 'brush';
 
-        let frames = []; // Array of canvas data URLs
+        let frames = [];
         let currentFrameIndex = 0;
 
         let isPlaying = false;
-        let animationSpeed = 10; // FPS
+        let animationSpeed = 10;
         let animationInterval = null;
 
         let onionSkinEnabled = false;
         let onionSkinPrevCount = 1;
         let onionSkinNextCount = 1;
         let onionSkinOpacity = 0.3;
-        let onionSkinColor = '#ff0000';
+        let onionPrevColor = '#ff0000';
+        let onionNextColor = '#0000ff';
 
         let isExporting = false;
         let exportProgress = 0;
-
-
-        // --- Utility Functions ---
 
         function showMessage(msg) {
             messageDisplay.textContent = msg;
@@ -276,7 +306,6 @@
             setTimeout(() => {
                 messageDisplay.classList.remove('opacity-100');
                 messageDisplay.classList.add('opacity-0');
-                // Hide after transition
                 setTimeout(() => messageDisplay.classList.add('hidden'), 500);
             }, 2000);
         }
@@ -285,37 +314,30 @@
             const r = parseInt(hex.slice(1, 3), 16);
             const g = parseInt(hex.slice(3, 5), 16);
             const b = parseInt(hex.slice(5, 7), 16);
-            return [r, g, b, 255]; // Always return with full alpha for internal comparison
+            return [r, g, b, 255];
         }
-
-        function rgbaToHex(r, g, b) {
-            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-        }
-
-        // --- Canvas Drawing and Rendering ---
 
         function loadImageAndDraw(imageData, alpha, tintColor = null) {
             if (typeof imageData !== 'string' || !imageData.startsWith('data:image/png;base64,')) {
-                // console.warn("Invalid image data provided for drawing:", imageData);
                 return;
             }
 
             const img = new Image();
             img.src = imageData;
             img.onload = () => {
-                context.save(); // Save current context state
+                context.save();
 
-                context.globalAlpha = 1.0; // Draw base image fully opaque
+                context.globalAlpha = 1.0;
                 context.drawImage(img, 0, 0, canvas.width, canvas.height);
 
                 if (tintColor) {
-                    context.globalCompositeOperation = 'source-atop'; // Draw tint over the image
+                    context.globalCompositeOperation = 'source-atop';
                     context.fillStyle = tintColor;
-                    context.globalAlpha = alpha; // Use the desired opacity for the tint
+                    context.globalAlpha = alpha;
                     context.fillRect(0, 0, canvas.width, canvas.height);
                 }
                 
-                context.restore(); // Restore context state
+                context.restore();
             };
             img.onerror = () => {
                 console.error("Error loading image data for onion skin/frame:", imageData);
@@ -323,31 +345,27 @@
         }
 
         function renderCanvasContent() {
-            context.clearRect(0, 0, canvas.width, canvas.height); // Clear completely
+            context.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 1. Draw previous frames (onion skin)
             if (onionSkinEnabled) {
                 for (let i = onionSkinPrevCount; i >= 1; i--) {
                     const prevFrameIndex = currentFrameIndex - i;
                     if (prevFrameIndex >= 0) {
-                        loadImageAndDraw(frames[prevFrameIndex], onionSkinOpacity, onionSkinColor);
+                        loadImageAndDraw(frames[prevFrameIndex], onionSkinOpacity, onionPrevColor);
                     }
                 }
             }
 
-            // 2. Draw the current frame (full opacity, no tint)
             loadImageAndDraw(frames[currentFrameIndex], 1.0);
 
-            // 3. Draw next frames (onion skin)
             if (onionSkinEnabled) {
-                for (let i = 1; i <= onionSkinNextCount; i++) {
+                for (let i = 1; i <= onionNextCount; i++) {
                     const nextFrameIndex = currentFrameIndex + i;
                     if (nextFrameIndex < frames.length) {
-                        loadImageAndDraw(frames[nextFrameIndex], onionSkinOpacity, onionSkinColor);
+                        loadImageAndDraw(frames[nextFrameIndex], onionSkinOpacity, onionNextColor);
                     }
                 }
             }
-            // Ensure globalAlpha and globalCompositeOperation are reset for subsequent drawing operations (brush/eraser)
             context.globalAlpha = 1.0;
             context.globalCompositeOperation = 'source-over';
         }
@@ -355,8 +373,6 @@
         function saveCurrentFrame() {
             frames[currentFrameIndex] = canvas.toDataURL('image/png');
         }
-
-        // --- Event Handlers ---
 
         function startDrawing(e) {
             if (tool === 'fill') {
@@ -373,8 +389,6 @@
             const offsetX = e.clientX - rect.left;
             const offsetY = e.clientY - rect.top;
 
-            // Clear canvas and redraw only the current frame's content before drawing
-            // This ensures drawing operations only affect the current frame's content
             context.clearRect(0, 0, canvas.width, canvas.height);
             const currentFrameData = frames[currentFrameIndex];
             if (currentFrameData && currentFrameData.startsWith('data:image/png;base64,')) {
@@ -411,16 +425,15 @@
         }
 
         function stopDrawing() {
-            if (tool !== 'fill') { // Only close path and save if it was a drawing tool (not fill)
+            if (tool !== 'fill') {
                 context.closePath();
                 isDrawing = false;
                 context.globalCompositeOperation = 'source-over';
                 saveCurrentFrame();
-                renderCanvasContent(); // Redraw with onion skins after saving
+                renderCanvasContent();
             }
         }
 
-        // --- Flood Fill Algorithm ---
         function floodFill(startX, startY, fillColor) {
             const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
             const pixels = imageData.data;
@@ -442,7 +455,6 @@
 
             const startColor = getPixelColor(startX, startY);
 
-            // If start color is already the fill color, do nothing
             if (startColor[0] === fillColor[0] &&
                 startColor[1] === fillColor[1] &&
                 startColor[2] === fillColor[2] &&
@@ -451,7 +463,7 @@
             }
 
             const pixelStack = [[startX, startY]];
-            const visited = new Set(); // To prevent infinite loops and re-processing
+            const visited = new Set();
 
             const matchColor = (color1, color2, tolerance = 5) => {
                 return Math.abs(color1[0] - color2[0]) < tolerance &&
@@ -467,11 +479,9 @@
                 if (visited.has(key)) continue;
                 visited.add(key);
 
-                // Check bounds and color match
                 if (x >= 0 && x < width && y >= 0 && y < height && matchColor(getPixelColor(x, y), startColor)) {
                     setPixelColor(x, y, fillColor);
 
-                    // Add neighbors
                     pixelStack.push([x + 1, y]);
                     pixelStack.push([x - 1, y]);
                     pixelStack.push([x, y + 1]);
@@ -481,10 +491,8 @@
             context.putImageData(imageData, 0, 0);
         }
 
-        // --- Frame Management ---
-
         function updateTimeline() {
-            timelineDiv.innerHTML = ''; // Clear existing buttons
+            timelineDiv.innerHTML = '';
             frames.forEach((_, index) => {
                 const button = document.createElement('button');
                 button.textContent = `F${index + 1}`;
@@ -498,15 +506,18 @@
                     if (isPlaying) pauseAnimation();
                     currentFrameIndex = index;
                     renderCanvasContent();
-                    updateTimeline(); // Re-render to highlight new current frame
+                    updateTimeline();
                 };
                 timelineDiv.appendChild(button);
             });
         }
 
         function addFrame() {
-            saveCurrentFrame(); // Save current frame's state
-            const blankCanvasData = canvas.toDataURL('image/png'); // Get blank state
+            saveCurrentFrame();
+
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            const blankCanvasData = canvas.toDataURL('image/png');
+
             frames.splice(currentFrameIndex + 1, 0, blankCanvasData);
             currentFrameIndex++;
             renderCanvasContent();
@@ -544,8 +555,6 @@
             showMessage('Current frame cleared!');
         }
 
-        // --- Project Save/Load ---
-
         function saveProject() {
             saveCurrentFrame();
             localStorage.setItem('animationProject', JSON.stringify(frames));
@@ -579,8 +588,6 @@
             }
         }
 
-        // --- Playback Functions ---
-
         function playAnimation() {
             if (frames.length === 0) {
                 showMessage('No frames to play!');
@@ -589,16 +596,16 @@
             if (isPlaying) return;
 
             isPlaying = true;
-            onionSkinEnabled = false; // Disable onion skin during playback
-            onionSkinEnabledCheckbox.checked = false; // Update UI
-            onionSkinControlsDiv.style.display = 'none'; // Hide controls
-            renderCanvasContent(); // Re-render to remove onion skins
+            onionSkinEnabled = false;
+            onionSkinEnabledCheckbox.checked = false;
+            onionSkinControlsDiv.style.display = 'none';
+            renderCanvasContent();
 
             const interval = 1000 / animationSpeed;
             animationInterval = setInterval(() => {
                 currentFrameIndex = (currentFrameIndex + 1) % frames.length;
                 renderCanvasContent();
-                updateTimeline(); // Keep timeline highlight updated
+                updateTimeline();
             }, interval);
             showMessage('Playing animation...');
             playBtn.disabled = true;
@@ -628,7 +635,6 @@
             stopBtn.disabled = true;
         }
 
-        // --- GIF Export ---
         function exportGif() {
             if (typeof GIF === 'undefined') {
                 showMessage('GIF.js library not loaded. Cannot export GIF.');
@@ -656,7 +662,6 @@
                 transparent: '#ffffff'
             });
 
-            // Add each frame to the GIF
             frames.forEach(frameData => {
                 const img = new Image();
                 img.src = frameData;
@@ -714,7 +719,7 @@
                 let chatHistory = [];
                 chatHistory.push({ role: "user", parts: [{ text: `Generate a creative drawing idea for an animation frame based on this prompt: "${prompt}". Keep it concise and focused on visual elements.` }] });
                 const payload = { contents: chatHistory };
-                const apiKey = ""; // API key will be provided by Canvas runtime
+                const apiKey = "";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
                 const response = await fetch(apiUrl, {
@@ -749,11 +754,7 @@
             }
         }
 
-
-        // --- Initialization ---
-
         window.onload = function() {
-            // Set initial canvas size
             canvas.width = canvas.offsetWidth;
             canvas.height = canvas.offsetHeight;
 
@@ -762,21 +763,19 @@
             context.strokeStyle = brushColor;
             context.lineWidth = brushSize;
 
-            // Initialize with one blank frame
             frames.push(canvas.toDataURL('image/png'));
             updateTimeline();
-            renderCanvasContent(); // Initial render
+            renderCanvasContent();
 
-            // Set initial button states
             brushToolBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
             brushToolBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
+            eraserToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
+            fillToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
+
             pauseBtn.disabled = true;
             stopBtn.disabled = true;
-            exportGifBtn.disabled = false; // Enable export initially
+            exportGifBtn.disabled = false;
 
-            // --- Event Listeners ---
-
-            // Tool selection
             brushToolBtn.addEventListener('click', () => {
                 tool = 'brush';
                 brushToolBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
@@ -785,7 +784,7 @@
                 eraserToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
                 fillToolBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
                 fillToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-                context.strokeStyle = brushColor; // Ensure brush color is active
+                context.strokeStyle = brushColor;
             });
             eraserToolBtn.addEventListener('click', () => {
                 tool = 'eraser';
@@ -817,41 +816,36 @@
                 context.lineWidth = brushSize;
             });
 
-            // Canvas drawing events
             canvas.addEventListener('mousedown', startDrawing);
             canvas.addEventListener('mousemove', draw);
             canvas.addEventListener('mouseup', stopDrawing);
             canvas.addEventListener('mouseleave', stopDrawing);
 
-            // Frame actions
             addFrameBtn.addEventListener('click', addFrame);
             deleteFrameBtn.addEventListener('click', deleteFrame);
             duplicateFrameBtn.addEventListener('click', duplicateFrame);
             clearCurrentFrameBtn.addEventListener('click', clearCurrentFrame);
 
-            // Project actions
             saveProjectBtn.addEventListener('click', saveProject);
             loadProjectBtn.addEventListener('click', loadProject);
             exportGifBtn.addEventListener('click', exportGif);
 
-            // Playback controls
             playBtn.addEventListener('click', playAnimation);
             pauseBtn.addEventListener('click', pauseAnimation);
             stopBtn.addEventListener('click', stopAnimation);
             animationSpeedInput.addEventListener('input', (e) => {
                 animationSpeed = parseInt(e.target.value);
                 animationSpeedValueSpan.textContent = animationSpeed;
-                if (isPlaying) { // Restart animation with new speed if playing
+                if (isPlaying) {
                     pauseAnimation();
                     playAnimation();
                 }
             });
 
-            // Onion Skin controls
             onionSkinEnabledCheckbox.addEventListener('change', (e) => {
                 onionSkinEnabled = e.target.checked;
                 onionSkinControlsDiv.style.display = onionSkinEnabled ? 'block' : 'none';
-                renderCanvasContent(); // Re-render to apply/remove onion skins
+                renderCanvasContent();
             });
             onionPrevInput.addEventListener('input', (e) => {
                 onionPrevCount = parseInt(e.target.value);
@@ -868,42 +862,40 @@
                 onionOpacityValueSpan.textContent = `${(onionOpacity * 100).toFixed(0)}%`;
                 renderCanvasContent();
             });
-            onionSkinColorInput.addEventListener('input', (e) => {
-                onionSkinColor = e.target.value;
+            onionPrevColorInput.addEventListener('input', (e) => {
+                onionPrevColor = e.target.value;
+                renderCanvasContent();
+            });
+            onionNextColorInput.addEventListener('input', (e) => {
+                onionNextColor = e.target.value;
                 renderCanvasContent();
             });
 
-            // Idea Generator Modal
             generateIdeaBtn.addEventListener('click', () => {
                 ideaModal.classList.remove('hidden');
-                generatedIdeaOutput.classList.add('hidden'); // Hide previous output
-                ideaText.textContent = ''; // Clear previous text
-                ideaPromptInput.value = ''; // Clear prompt input
+                generatedIdeaOutput.classList.add('hidden');
+                ideaText.textContent = '';
+                ideaPromptInput.value = '';
             });
             closeIdeaModalBtn.addEventListener('click', () => {
                 ideaModal.classList.add('hidden');
             });
             getIdeaBtn.addEventListener('click', generateFrameIdea);
 
-            // Handle window resize
             window.addEventListener('resize', () => {
-                // Save current frame's image data
                 const currentFrameData = canvas.toDataURL('image/png');
-                // Update canvas dimensions
                 canvas.width = canvas.offsetWidth;
                 canvas.height = canvas.offsetHeight;
-                // Redraw the saved image data onto the resized canvas
                 const img = new Image();
                 img.src = currentFrameData;
                 img.onload = () => {
                     context.clearRect(0, 0, canvas.width, canvas.height);
                     context.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    // Reapply drawing styles after resize
                     context.lineCap = 'round';
                     context.lineJoin = 'round';
                     context.strokeStyle = brushColor;
                     context.lineWidth = brushSize;
-                    renderCanvasContent(); // Re-render with onion skins
+                    renderCanvasContent();
                 };
             });
         };
