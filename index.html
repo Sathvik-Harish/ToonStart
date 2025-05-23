@@ -7,6 +7,69 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/gif.js@0.2.0/dist/gif.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, setDoc, deleteDoc, query, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+
+        let app;
+        let db;
+        let auth;
+        let userId = 'anonymous';
+
+        window.firebaseInitialized = false;
+
+        async function initializeFirebase() {
+            if (!firebaseConfig.apiKey) {
+                console.error("Firebase config is missing API key. Cannot initialize Firestore.");
+                showMessage("Firebase not configured. Project saving/loading disabled.");
+                return;
+            }
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    console.log("Firebase authenticated. User ID:", userId);
+                    window.firebaseInitialized = true;
+                    loadProjectsListMain();
+                } else {
+                    console.log("No Firebase user. Attempting anonymous sign-in.");
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined') {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Firebase anonymous sign-in failed:", error);
+                        showMessage("Anonymous sign-in failed. Project saving/loading disabled.");
+                    }
+                }
+            });
+        }
+
+        window.initializeFirebase = initializeFirebase;
+        window.getFirestoreInstance = () => db;
+        window.getAuthInstance = () => auth;
+        window.getUserId = () => userId;
+        window.getCollection = (collectionName) => collection(db, `artifacts/${appId}/users/${userId}/${collectionName}`);
+        window.addDoc = addDoc;
+        window.getDocs = getDocs;
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.deleteDoc = deleteDoc;
+        window.query = query;
+        window.onSnapshot = onSnapshot;
+        window.GoogleAuthProvider = GoogleAuthProvider;
+        window.signInWithPopup = signInWithPopup;
+
+    </script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -91,7 +154,24 @@
 
     <div id="messageDisplay" class="hidden bg-blue-500 text-white px-4 py-2 rounded-lg mb-4 shadow-md transition-opacity duration-500 opacity-0"></div>
 
-    <div class="flex w-full max-w-6xl bg-white rounded-xl shadow-lg overflow-hidden flex-grow flex-grow-container">
+    <div id="mainMenu" class="w-full max-w-2xl bg-white rounded-xl shadow-lg p-8 flex flex-col items-center space-y-6">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">Your Projects</h2>
+        <div id="mainProjectsListContainer" class="w-full space-y-3 mb-6 max-h-80vh overflow-y-auto">
+            <p class="text-gray-500">Loading projects...</p>
+        </div>
+        <button id="createNewProjectBtn" class="bg-green-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-green-700 transition-colors duration-200 text-lg font-semibold w-full sm:w-auto">
+            ➕ Create New Project
+        </button>
+        <button id="googleSignInBtn" class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200 text-lg font-semibold w-full sm:w-auto flex items-center justify-center space-x-2">
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12.24 10.27v2.4h3.28c-.2 1.28-1.2 3.03-3.28 3.03-2.65 0-4.82-2.16-4.82-4.82s2.17-4.82 4.82-4.82c1.45 0 2.45.62 3.03 1.18l2.1-2.03C15.82 3.65 14.12 3 12.24 3 7.37 3 3 7.37 3 12.24s4.37 9.24 9.24 9.24c4.87 0 8.52-3.8 8.52-8.52 0-.58-.06-1.12-.15-1.65H12.24z"/>
+            </svg>
+            <span>Sign in with Google</span>
+        </button>
+        <p class="text-sm text-gray-500 mt-4">User ID: <span id="userIdDisplay" class="font-mono text-gray-700 break-all">Loading...</span></p>
+    </div>
+
+    <div id="editorContainer" class="flex w-full max-w-6xl bg-white rounded-xl shadow-lg overflow-hidden flex-grow flex-grow-container hidden">
         <div id="staticToolbox">
             <div class="flex flex-col space-y-4">
                 <div class="toolbox-section">
@@ -126,8 +206,8 @@
                 <div class="toolbox-section">
                     <h2>Project</h2>
                     <div class="flex flex-col space-y-1">
-                        <button id="saveProject" class="bg-indigo-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-indigo-600 text-sm">Save</button>
-                        <button id="loadProject" class="bg-purple-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-purple-600 text-sm">Load</button>
+                        <button id="saveAsProjectBtn" class="bg-indigo-400 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-indigo-500 text-sm">Save As...</button>
+                        <button id="backToMainMenuBtn" class="bg-gray-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-600 text-sm">Back to Main Menu</button>
                         <button id="exportGif" class="bg-teal-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-teal-600 text-sm">
                             🖼️ Export GIF
                         </button>
@@ -175,10 +255,6 @@
         </div>
 
         <div class="flex flex-col relative flex-grow p-4 sm:p-6">
-            <div class="flex-grow flex justify-center items-center relative">
-                <canvas id="drawingCanvas"></canvas>
-            </div>
-
             <div class="mt-4 p-4 bg-gray-100 rounded-lg shadow-inner flex flex-col sm:flex-row items-center justify-center gap-4">
                 <h3 class="text-lg font-semibold text-gray-700">Playback:</h3>
                 <div class="flex gap-2">
@@ -198,6 +274,10 @@
                     <span id="animationSpeedValue" class="font-bold text-gray-800">10</span>
                 </div>
             </div>
+            <div class="flex-grow flex justify-center items-center relative">
+                <canvas id="drawingCanvas"></canvas>
+            </div>
+
 
             <div class="mt-6 p-4 bg-gray-100 rounded-lg shadow-inner overflow-x-auto">
                 <h3 class="text-lg font-semibold text-gray-700 mb-3">Timeline</h3>
@@ -229,7 +309,37 @@
         </div>
     </div>
 
-    <script>
+    <div id="saveAsModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Save Project As</h3>
+            <label for="projectNameInput" class="block text-gray-700 font-medium mb-2">Name:</label>
+            <input type="text" id="projectNameInput" placeholder="Enter project name" class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="flex justify-end space-x-3">
+                <button id="cancelSaveAsBtn" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-200">Cancel</button>
+                <button id="confirmSaveAsBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="createProjectModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">New Project</h3>
+            <label for="canvasWidthInput" class="block text-gray-700 font-medium mb-2">Canvas Width (px):</label>
+            <input type="number" id="canvasWidthInput" value="800" min="100" max="2000" class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <label for="canvasHeightInput" class="block text-gray-700 font-medium mb-2">Canvas Height (px):</label>
+            <input type="number" id="canvasHeightInput" value="600" min="100" max="2000" class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="flex justify-end space-x-3 mt-6">
+                <button id="cancelCreateProjectBtn" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-200">Cancel</button>
+                <button id="confirmCreateProjectBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-green-700 transition-colors duration-200">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { getFirestore, collection, addDoc, getDocs, doc, setDoc, deleteDoc, query, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+
         const canvas = document.getElementById('drawingCanvas');
         const context = canvas.getContext('2d');
         const messageDisplay = document.getElementById('messageDisplay');
@@ -246,9 +356,9 @@
         const duplicateFrameBtn = document.getElementById('duplicateFrame');
         const clearCurrentFrameBtn = document.getElementById('clearCurrentFrame');
 
-        const saveProjectBtn = document.getElementById('saveProject');
-        const loadProjectBtn = document.getElementById('loadProject');
+        const saveAsProjectBtn = document.getElementById('saveAsProjectBtn');
         const exportGifBtn = document.getElementById('exportGif');
+        const backToMainMenuBtn = document.getElementById('backToMainMenuBtn');
 
         const playBtn = document.getElementById('playBtn');
         const pauseBtn = document.getElementById('pauseBtn');
@@ -277,6 +387,24 @@
         const ideaText = document.getElementById('ideaText');
         const closeIdeaModalBtn = document.getElementById('closeIdeaModalBtn');
 
+        const saveAsModal = document.getElementById('saveAsModal');
+        const projectNameInput = document.getElementById('projectNameInput');
+        const cancelSaveAsBtn = document.getElementById('cancelSaveAsBtn');
+        const confirmSaveAsBtn = document.getElementById('confirmSaveAsBtn');
+
+        const mainMenu = document.getElementById('mainMenu');
+        const editorContainer = document.getElementById('editorContainer');
+        const createNewProjectBtn = document.getElementById('createNewProjectBtn');
+        const mainProjectsListContainer = document.getElementById('mainProjectsListContainer');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const googleSignInBtn = document.getElementById('googleSignInBtn');
+
+        const createProjectModal = document.getElementById('createProjectModal');
+        const canvasWidthInput = document.getElementById('canvasWidthInput');
+        const canvasHeightInput = document.getElementById('canvasHeightInput');
+        const cancelCreateProjectBtn = document.getElementById('cancelCreateProjectBtn');
+        const confirmCreateProjectBtn = document.getElementById('confirmCreateProjectBtn');
+
         let isDrawing = false;
         let brushColor = '#000000';
         let brushSize = 5;
@@ -298,6 +426,10 @@
 
         let isExporting = false;
         let exportProgress = 0;
+
+        let currentProjectId = null;
+        let currentProjectName = 'Untitled Project';
+        let autoSaveIntervalId = null;
 
         function showMessage(msg) {
             messageDisplay.textContent = msg;
@@ -555,36 +687,77 @@
             showMessage('Current frame cleared!');
         }
 
-        function saveProject() {
-            saveCurrentFrame();
-            localStorage.setItem('animationProject', JSON.stringify(frames));
-            localStorage.setItem('currentFrameIndex', currentFrameIndex.toString());
-            showMessage('Animation project saved!');
-        }
-
-        function loadProject() {
-            const savedProject = localStorage.getItem('animationProject');
-            const savedIndex = localStorage.getItem('currentFrameIndex');
-
-            if (!savedProject) {
-                showMessage('No saved animation project found!');
+        async function saveProjectToFirestore(projectId, projectName, projectFrames, projectCurrentFrameIndex) {
+            if (!window.firebaseInitialized) {
+                showMessage("Firebase not initialized. Cannot save project.");
                 return;
             }
-
             try {
-                const loadedFrames = JSON.parse(savedProject);
-                if (loadedFrames && Array.isArray(loadedFrames) && loadedFrames.length > 0) {
-                    frames = loadedFrames;
-                    currentFrameIndex = Math.min(parseInt(savedIndex, 10) || 0, frames.length - 1);
-                    renderCanvasContent();
-                    updateTimeline();
-                    showMessage('Animation project loaded!');
+                const projectsCollectionRef = window.getCollection('projects');
+                const projectDocRef = window.doc(projectsCollectionRef, projectId);
+
+                const projectData = {
+                    name: projectName,
+                    frames: projectFrames,
+                    currentFrameIndex: projectCurrentFrameIndex,
+                    timestamp: serverTimestamp()
+                };
+
+                await window.setDoc(projectDocRef, projectData);
+                currentProjectId = projectId;
+                currentProjectName = projectName;
+                showMessage(`Project "${projectName}" saved!`);
+            } catch (error) {
+                console.error("Error saving project to Firestore:", error);
+                showMessage("Error saving project.");
+            }
+        }
+
+        async function loadProjectFromFirestore(projectId) {
+            if (!window.firebaseInitialized) {
+                showMessage("Firebase not initialized. Cannot load project.");
+                return;
+            }
+            try {
+                const projectsCollectionRef = window.getCollection('projects');
+                const projectDocRef = window.doc(projectsCollectionRef, projectId);
+                const docSnap = await window.getDoc(projectDocRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    showEditor(projectId, data.name, data.frames, data.currentFrameIndex);
+                    showMessage(`Project "${data.name}" loaded successfully!`);
                 } else {
-                    showMessage('Saved project data is corrupt or empty.');
+                    showMessage("Project not found.");
                 }
             } catch (error) {
-                console.error("Error parsing loaded project:", error);
-                showMessage('Error loading project data.');
+                console.error("Error loading project from Firestore:", error);
+                showMessage("Error loading project.");
+            }
+        }
+
+        async function deleteProjectFromFirestore(projectId, projectName) {
+            if (!window.firebaseInitialized) {
+                showMessage("Firebase not initialized. Cannot delete project.");
+                return;
+            }
+            try {
+                const projectsCollectionRef = window.getCollection('projects');
+                const projectDocRef = window.doc(projectsCollectionRef, projectId);
+                await window.deleteDoc(projectDocRef);
+                showMessage(`Project "${projectName}" deleted!`);
+                if (currentProjectId === projectId) {
+                    currentProjectId = null;
+                    currentProjectName = 'Untitled Project';
+                    frames = [canvas.toDataURL('image/png')];
+                    currentFrameIndex = 0;
+                    renderCanvasContent();
+                    updateTimeline();
+                }
+                loadProjectsListMain();
+            } catch (error) {
+                console.error("Error deleting project from Firestore:", error);
+                showMessage("Error deleting project.");
             }
         }
 
@@ -648,7 +821,7 @@
 
             isExporting = true;
             exportProgress = 0;
-            exportGifBtn.textContent = `Exporting GIF... 0%`;
+            exportGifBtn.textContent = `Exporting GIF... ${exportProgress}%`;
             exportGifBtn.disabled = true;
             showMessage('Generating GIF...');
 
@@ -754,18 +927,134 @@
             }
         }
 
+        function showMainMenu() {
+            mainMenu.classList.remove('hidden');
+            editorContainer.classList.add('hidden');
+            if (autoSaveIntervalId) {
+                clearInterval(autoSaveIntervalId);
+                autoSaveIntervalId = null;
+            }
+            currentProjectId = null;
+            currentProjectName = 'Untitled Project';
+            userIdDisplay.textContent = window.getUserId();
+            loadProjectsListMain();
+        }
+
+        function showEditor(projectId = null, projectName = 'Untitled Project', initialFrames = null, initialFrameIndex = 0) {
+            mainMenu.classList.add('hidden');
+            editorContainer.classList.remove('hidden');
+
+            currentProjectId = projectId;
+            currentProjectName = projectName;
+
+            if (initialFrames) {
+                frames = initialFrames;
+                currentFrameIndex = initialFrameIndex;
+            } else {
+                canvas.width = parseInt(canvasWidthInput.value) || 800;
+                canvas.height = parseInt(canvasHeightInput.value) || 600;
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                frames = [canvas.toDataURL('image/png')];
+                currentFrameIndex = 0;
+            }
+
+            renderCanvasContent();
+            updateTimeline();
+
+            if (autoSaveIntervalId) {
+                clearInterval(autoSaveIntervalId);
+            }
+            if (currentProjectId) {
+                autoSaveIntervalId = setInterval(autoSave, 10000);
+            }
+        }
+
+        async function autoSave() {
+            if (currentProjectId) {
+                saveCurrentFrame();
+                await saveProjectToFirestore(currentProjectId, currentProjectName, frames, currentFrameIndex);
+            }
+        }
+
+        async function loadProjectsListMain() {
+            if (!window.firebaseInitialized) {
+                mainProjectsListContainer.innerHTML = '<p class="text-red-500">Firebase not initialized. Cannot load projects.</p>';
+                return;
+            }
+            try {
+                const projectsCollectionRef = window.getCollection('projects');
+                const q = window.query(projectsCollectionRef);
+                
+                window.onSnapshot(q, (querySnapshot) => {
+                    mainProjectsListContainer.innerHTML = '';
+                    if (querySnapshot.empty) {
+                        mainProjectsListContainer.innerHTML = '<p class="text-gray-500">No projects saved yet. Click "Create New Project" to start!</p>';
+                        return;
+                    }
+                    querySnapshot.forEach((doc) => {
+                        const project = doc.data();
+                        const projectId = doc.id;
+                        const projectElement = document.createElement('div');
+                        projectElement.classList.add('flex', 'items-center', 'justify-between', 'p-3', 'bg-gray-50', 'rounded-lg', 'shadow-sm', 'border', 'border-gray-200');
+                        projectElement.innerHTML = `
+                            <span class="font-medium text-gray-800 truncate">${project.name}</span>
+                            <div class="flex space-x-2">
+                                <button data-project-id="${projectId}" data-project-name="${project.name}" class="load-project-btn bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600">Load</button>
+                                <button data-project-id="${projectId}" data-project-name="${project.name}" class="delete-project-btn bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600">Delete</button>
+                            </div>
+                        `;
+                        mainProjectsListContainer.appendChild(projectElement);
+                    });
+
+                    document.querySelectorAll('.load-project-btn').forEach(button => {
+                        button.onclick = () => {
+                            loadProjectFromFirestore(button.dataset.projectId);
+                        };
+                    });
+                    document.querySelectorAll('.delete-project-btn').forEach(button => {
+                        button.onclick = () => {
+                            deleteProjectFromFirestore(button.dataset.projectId, button.dataset.projectName);
+                        };
+                    });
+                });
+            } catch (error) {
+                console.error("Error fetching projects list:", error);
+                mainProjectsListContainer.innerHTML = '<p class="text-red-500">Error loading projects.</p>';
+            }
+        }
+
+        async function handleGoogleSignIn() {
+            if (!window.firebaseInitialized) {
+                showMessage("Firebase not initialized. Please wait or refresh.");
+                return;
+            }
+            try {
+                const provider = new GoogleAuthProvider();
+                const result = await signInWithPopup(window.getAuthInstance(), provider);
+                const user = result.user;
+                showMessage(`Signed in as ${user.displayName || user.email}!`);
+            } catch (error) {
+                console.error("Google Sign-In Error:", error);
+                let errorMessage = "Google Sign-In failed.";
+                if (error.code === 'auth/popup-closed-by-user') {
+                    errorMessage = "Google Sign-In cancelled.";
+                } else if (error.code === 'auth/cancelled-popup-request') {
+                    errorMessage = "Another sign-in pop-up is already open. Please close it and try again.";
+                } else if (error.code === 'auth/unauthorized-domain') {
+                    errorMessage = "Google Sign-In failed: Unauthorized domain. Please add this domain to your Firebase project's authorized domains in the Firebase Console (Authentication -> Settings).";
+                }
+                showMessage(errorMessage);
+            }
+        }
+
         window.onload = function() {
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
+            window.initializeFirebase();
+            showMainMenu();
 
             context.lineCap = 'round';
             context.lineJoin = 'round';
             context.strokeStyle = brushColor;
             context.lineWidth = brushSize;
-
-            frames.push(canvas.toDataURL('image/png'));
-            updateTimeline();
-            renderCanvasContent();
 
             brushToolBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
             brushToolBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
@@ -775,6 +1064,60 @@
             pauseBtn.disabled = true;
             stopBtn.disabled = true;
             exportGifBtn.disabled = false;
+
+            saveAsProjectBtn.addEventListener('click', () => {
+                saveCurrentFrame();
+                saveAsModal.classList.remove('hidden');
+                projectNameInput.value = currentProjectName === 'Untitled Project' ? '' : currentProjectName;
+                projectNameInput.focus();
+            });
+
+            cancelSaveAsBtn.addEventListener('click', () => {
+                saveAsModal.classList.add('hidden');
+            });
+
+            confirmSaveAsBtn.addEventListener('click', async () => {
+                const projectName = projectNameInput.value.trim();
+                if (!projectName) {
+                    showMessage('Project name cannot be empty.');
+                    return;
+                }
+                const newProjectId = window.crypto.randomUUID();
+                await saveProjectToFirestore(newProjectId, projectName, frames, currentFrameIndex);
+                saveAsModal.classList.add('hidden');
+            });
+
+            backToMainMenuBtn.addEventListener('click', () => {
+                saveCurrentFrame();
+                if (currentProjectId) {
+                    autoSave();
+                }
+                showMainMenu();
+            });
+
+            createNewProjectBtn.addEventListener('click', () => {
+                createProjectModal.classList.remove('hidden');
+                canvasWidthInput.value = 800;
+                canvasHeightInput.value = 600;
+            });
+
+            googleSignInBtn.addEventListener('click', handleGoogleSignIn);
+
+            cancelCreateProjectBtn.addEventListener('click', () => {
+                createProjectModal.classList.add('hidden');
+            });
+
+            confirmCreateProjectBtn.addEventListener('click', () => {
+                const width = parseInt(canvasWidthInput.value);
+                const height = parseInt(canvasHeightInput.value);
+
+                if (isNaN(width) || isNaN(height) || width < 100 || width > 2000 || height < 100 || height > 2000) {
+                    showMessage('Please enter valid canvas dimensions (100-2000px).');
+                    return;
+                }
+                createProjectModal.classList.add('hidden');
+                showEditor(null, 'Untitled Project', null, 0);
+            });
 
             brushToolBtn.addEventListener('click', () => {
                 tool = 'brush';
@@ -826,8 +1169,6 @@
             duplicateFrameBtn.addEventListener('click', duplicateFrame);
             clearCurrentFrameBtn.addEventListener('click', clearCurrentFrame);
 
-            saveProjectBtn.addEventListener('click', saveProject);
-            loadProjectBtn.addEventListener('click', loadProject);
             exportGifBtn.addEventListener('click', exportGif);
 
             playBtn.addEventListener('click', playAnimation);
