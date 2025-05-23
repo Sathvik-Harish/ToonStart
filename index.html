@@ -19,39 +19,50 @@
         let db;
         let auth;
         let userId = 'anonymous';
+        let firebaseUsable = false; // Flag to indicate if Firebase is properly initialized with an API key
 
         window.firebaseInitialized = false;
 
         async function initializeFirebase() {
             if (!firebaseConfig.apiKey) {
-                console.error("Firebase config is missing API key. Cannot initialize Firestore.");
-                showMessage("Firebase not configured. Project saving/loading disabled.");
+                console.error("DEVELOPER NOTE: Firebase config is missing API key. Project saving/loading via cloud will be disabled.");
+                window.firebaseInitialized = false;
+                firebaseUsable = false;
                 return;
             }
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                firebaseUsable = true; // Mark as usable if init succeeds
 
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    userId = user.uid;
-                    console.log("Firebase authenticated. User ID:", userId);
-                    window.firebaseInitialized = true;
-                    loadProjectsListMain();
-                } else {
-                    console.log("No Firebase user. Attempting anonymous sign-in.");
-                    try {
-                        if (typeof __initial_auth_token !== 'undefined') {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        console.log("Firebase authenticated. User ID:", userId);
+                        window.firebaseInitialized = true;
+                        // Reload projects list to reflect auth state
+                        window.loadProjectsListMain(); // Use window.loadProjectsListMain
+                        document.getElementById('userIdDisplay').textContent = user.displayName || user.email || user.uid;
+                    } else {
+                        console.log("No Firebase user. Attempting anonymous sign-in.");
+                        try {
+                            if (typeof __initial_auth_token !== 'undefined') {
+                                await signInWithCustomToken(auth, __initial_auth_token);
+                            } else {
+                                await signInAnonymously(auth);
+                            }
+                        } catch (error) {
+                            console.error("DEVELOPER NOTE: Firebase anonymous sign-in failed:", error);
+                            // showMessage("Anonymous sign-in failed. Project saving/loading disabled."); // Removed for user
                         }
-                    } catch (error) {
-                        console.error("Firebase anonymous sign-in failed:", error);
-                        showMessage("Anonymous sign-in failed. Project saving/loading disabled.");
                     }
-                }
-            });
+                });
+            } catch (error) {
+                console.error("DEVELOPER NOTE: Firebase initialization failed:", error);
+                firebaseUsable = false;
+                window.firebaseInitialized = false;
+            }
         }
 
         window.initializeFirebase = initializeFirebase;
@@ -68,7 +79,64 @@
         window.onSnapshot = onSnapshot;
         window.GoogleAuthProvider = GoogleAuthProvider;
         window.signInWithPopup = signInWithPopup;
+        window.firebaseUsable = () => firebaseUsable; // Expose firebaseUsable status
 
+        // Expose loadProjectsListMain globally
+        window.loadProjectsListMain = async function() {
+            if (!window.firebaseUsable()) {
+                mainProjectsListContainer.innerHTML = '<p class="text-red-500">Cloud saving/loading disabled (Firebase not configured).</p>';
+                return;
+            }
+            // Ensure user is authenticated before trying to load user-specific projects
+            const authInstance = window.getAuthInstance();
+            const authUser = authInstance ? authInstance.currentUser : null;
+
+            if (!authUser || authUser.uid !== window.getUserId()) {
+                mainProjectsListContainer.innerHTML = '<p class="text-gray-500">Authenticating user for cloud projects...</p>';
+                return;
+            }
+
+            try {
+                const projectsCollectionRef = window.getCollection('projects');
+                const q = window.query(projectsCollectionRef);
+                
+                window.onSnapshot(q, (querySnapshot) => {
+                    mainProjectsListContainer.innerHTML = '';
+                    if (querySnapshot.empty) {
+                        mainProjectsListContainer.innerHTML = '<p class="text-gray-500">No cloud projects saved yet. Click "Create New Project" to start!</p>';
+                        return;
+                    }
+                    querySnapshot.forEach((doc) => {
+                        const project = doc.data();
+                        const projectId = doc.id;
+                        const projectElement = document.createElement('div');
+                        projectElement.classList.add('flex', 'items-center', 'justify-between', 'p-3', 'bg-gray-50', 'rounded-lg', 'shadow-sm', 'border', 'border-gray-200');
+                        projectElement.innerHTML = `
+                            <span class="font-medium text-gray-800 truncate">${project.name}</span>
+                            <div class="flex space-x-2">
+                                <button data-project-id="${projectId}" data-project-name="${project.name}" class="load-project-btn bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600">Load</button>
+                                <button data-project-id="${projectId}" data-project-name="${project.name}" class="delete-project-btn bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600">Delete</button>
+                            </div>
+                        `;
+                        mainProjectsListContainer.appendChild(projectElement);
+                    });
+
+                    document.querySelectorAll('.load-project-btn').forEach(button => {
+                        button.onclick = () => {
+                            loadProjectFromFirestore(button.dataset.projectId);
+                        };
+                    });
+                    document.querySelectorAll('.delete-project-btn').forEach(button => {
+                        button.onclick = () => {
+                            deleteProjectFromFirestore(button.dataset.projectId, button.dataset.projectName);
+                        };
+                    });
+                });
+            } catch (error) {
+                console.error("Error fetching projects list:", error);
+                mainProjectsListContainer.innerHTML = '<p class="text-red-500">Error loading cloud projects.</p>';
+            }
+        }
     </script>
     <style>
         body {
@@ -402,7 +470,7 @@
         const createProjectModal = document.getElementById('createProjectModal');
         const canvasWidthInput = document.getElementById('canvasWidthInput');
         const canvasHeightInput = document.getElementById('canvasHeightInput');
-        const cancelCreateProjectBtn = document.getElementById('cancelCreateProjectBtn');
+        const cancelCreateProjectBtn = document.getElementById('cancelCreateProjectBtn'); // Corrected ID
         const confirmCreateProjectBtn = document.getElementById('confirmCreateProjectBtn');
 
         let isDrawing = false;
@@ -427,7 +495,7 @@
         let isExporting = false;
         let exportProgress = 0;
 
-        let currentProjectId = null;
+        let currentProjectId = null; // null for new/local projects, ID for Firebase projects
         let currentProjectName = 'Untitled Project';
         let autoSaveIntervalId = null;
 
@@ -504,6 +572,9 @@
 
         function saveCurrentFrame() {
             frames[currentFrameIndex] = canvas.toDataURL('image/png');
+            if (!currentProjectId) { // Only save to local storage if it's not a Firebase project
+                saveCurrentProjectLocally();
+            }
         }
 
         function startDrawing(e) {
@@ -639,13 +710,14 @@
                     currentFrameIndex = index;
                     renderCanvasContent();
                     updateTimeline();
+                    if (!currentProjectId) { saveCurrentProjectLocally(); } // Save on frame change for local projects
                 };
                 timelineDiv.appendChild(button);
             });
         }
 
         function addFrame() {
-            saveCurrentFrame();
+            saveCurrentFrame(); // This will save current frame and potentially local storage
 
             context.clearRect(0, 0, canvas.width, canvas.height);
             const blankCanvasData = canvas.toDataURL('image/png');
@@ -655,6 +727,7 @@
             renderCanvasContent();
             updateTimeline();
             showMessage('New frame added!');
+            if (!currentProjectId) { saveCurrentProjectLocally(); } // Explicit save for frame structure change
         }
 
         function deleteFrame() {
@@ -669,6 +742,7 @@
             renderCanvasContent();
             updateTimeline();
             showMessage('Frame deleted!');
+            if (!currentProjectId) { saveCurrentProjectLocally(); } // Explicit save for frame structure change
         }
 
         function duplicateFrame() {
@@ -678,18 +752,70 @@
             renderCanvasContent();
             updateTimeline();
             showMessage('Frame duplicated!');
+            if (!currentProjectId) { saveCurrentProjectLocally(); } // Explicit save for frame structure change
         }
 
         function clearCurrentFrame() {
             context.clearRect(0, 0, canvas.width, canvas.height);
-            saveCurrentFrame();
+            saveCurrentFrame(); // This will save current frame and potentially local storage
             renderCanvasContent();
             showMessage('Current frame cleared!');
+            // saveCurrentProjectLocally() is already called in saveCurrentFrame if not a firebase project.
         }
 
+        // --- Local Storage Functions ---
+        function saveCurrentProjectLocally() {
+            try {
+                const localProjectData = {
+                    frames: frames,
+                    currentFrameIndex: currentFrameIndex,
+                    canvasWidth: canvas.width,
+                    canvasHeight: canvas.height,
+                    name: currentProjectName // Store name for continuity
+                };
+                localStorage.setItem('toonstart_last_project', JSON.stringify(localProjectData));
+                console.log("DEVELOPER NOTE: Project state saved locally.");
+            } catch (e) {
+                console.error("DEVELOPER NOTE: Error saving project to LocalStorage:", e);
+                showMessage("Error saving local project data (possibly too large).");
+            }
+        }
+
+        function loadLastProjectLocally() {
+            try {
+                const localProjectDataString = localStorage.getItem('toonstart_last_project');
+                if (localProjectDataString) {
+                    const localProjectData = JSON.parse(localProjectDataString);
+                    if (localProjectData && Array.isArray(localProjectData.frames) && localProjectData.frames.length > 0) {
+                        // Set current project details from local storage
+                        currentProjectName = localProjectData.name || 'Untitled Project';
+                        frames = localProjectData.frames;
+                        currentFrameIndex = localProjectData.currentFrameIndex || 0;
+                        if (currentFrameIndex >= frames.length) {
+                            currentFrameIndex = frames.length - 1;
+                        }
+
+                        // Return parameters needed for showEditor
+                        return {
+                            name: currentProjectName,
+                            frames: frames,
+                            currentFrameIndex: currentFrameIndex,
+                            width: localProjectData.canvasWidth || 800,
+                            height: localProjectData.canvasHeight || 600
+                        };
+                    }
+                }
+            } catch (e) {
+                console.error("DEVELOPER NOTE: Error loading project from LocalStorage:", e);
+                showMessage("Error loading local project data.");
+            }
+            return null; // Indicate failure or no data
+        }
+        // --- End Local Storage Functions ---
+
         async function saveProjectToFirestore(projectId, projectName, projectFrames, projectCurrentFrameIndex) {
-            if (!window.firebaseInitialized) {
-                showMessage("Firebase not initialized. Cannot save project.");
+            if (!window.firebaseInitialized || !window.firebaseUsable()) {
+                showMessage("Cloud saving disabled. Firebase is not configured.");
                 return;
             }
             try {
@@ -706,16 +832,16 @@
                 await window.setDoc(projectDocRef, projectData);
                 currentProjectId = projectId;
                 currentProjectName = projectName;
-                showMessage(`Project "${projectName}" saved!`);
+                showMessage(`Project "${projectName}" saved to cloud!`);
             } catch (error) {
                 console.error("Error saving project to Firestore:", error);
-                showMessage("Error saving project.");
+                showMessage("Error saving project to cloud.");
             }
         }
 
         async function loadProjectFromFirestore(projectId) {
-            if (!window.firebaseInitialized) {
-                showMessage("Firebase not initialized. Cannot load project.");
+            if (!window.firebaseInitialized || !window.firebaseUsable()) {
+                showMessage("Cloud loading disabled. Firebase is not configured.");
                 return;
             }
             try {
@@ -725,39 +851,43 @@
 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    showEditor(projectId, data.name, data.frames, data.currentFrameIndex);
-                    showMessage(`Project "${data.name}" loaded successfully!`);
+                    showEditor(projectId, data.name, data.frames, data.currentFrameIndex, data.canvasWidth || 800, data.canvasHeight || 600);
+                    showMessage(`Project "${data.name}" loaded successfully from cloud!`);
                 } else {
-                    showMessage("Project not found.");
+                    showMessage("Cloud project not found.");
                 }
             } catch (error) {
                 console.error("Error loading project from Firestore:", error);
-                showMessage("Error loading project.");
+                showMessage("Error loading project from cloud.");
             }
         }
 
         async function deleteProjectFromFirestore(projectId, projectName) {
-            if (!window.firebaseInitialized) {
-                showMessage("Firebase not initialized. Cannot delete project.");
+            if (!window.firebaseInitialized || !window.firebaseUsable()) {
+                showMessage("Cloud deletion disabled. Firebase is not configured.");
                 return;
             }
             try {
                 const projectsCollectionRef = window.getCollection('projects');
                 const projectDocRef = window.doc(projectsCollectionRef, projectId);
                 await window.deleteDoc(projectDocRef);
-                showMessage(`Project "${projectName}" deleted!`);
+                showMessage(`Project "${projectName}" deleted from cloud!`);
                 if (currentProjectId === projectId) {
+                    // If the deleted project was the one currently open, revert to a blank local project
                     currentProjectId = null;
                     currentProjectName = 'Untitled Project';
+                    canvas.width = 800; canvas.height = 600; // Reset canvas size
+                    context.clearRect(0, 0, canvas.width, canvas.height);
                     frames = [canvas.toDataURL('image/png')];
                     currentFrameIndex = 0;
                     renderCanvasContent();
                     updateTimeline();
+                    saveCurrentProjectLocally(); // Save this new blank state locally
                 }
-                loadProjectsListMain();
+                window.loadProjectsListMain(); // Reload the list of cloud projects
             } catch (error) {
                 console.error("Error deleting project from Firestore:", error);
-                showMessage("Error deleting project.");
+                showMessage("Error deleting project from cloud.");
             }
         }
 
@@ -892,7 +1022,7 @@
                 let chatHistory = [];
                 chatHistory.push({ role: "user", parts: [{ text: `Generate a creative drawing idea for an animation frame based on this prompt: "${prompt}". Keep it concise and focused on visual elements.` }] });
                 const payload = { contents: chatHistory };
-                const apiKey = "";
+                const apiKey = ""; // Your Gemini API key for idea generation
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
                 const response = await fetch(apiUrl, {
@@ -934,25 +1064,26 @@
                 clearInterval(autoSaveIntervalId);
                 autoSaveIntervalId = null;
             }
-            currentProjectId = null;
-            currentProjectName = 'Untitled Project';
+            currentProjectId = null; // Reset to null when returning to main menu
+            currentProjectName = 'Untitled Project'; // Reset name
             userIdDisplay.textContent = window.getUserId();
-            loadProjectsListMain();
+            window.loadProjectsListMain(); // This will load cloud projects if Firebase is usable
         }
 
-        function showEditor(projectId = null, projectName = 'Untitled Project', initialFrames = null, initialFrameIndex = 0) {
+        function showEditor(projectId = null, projectName = 'Untitled Project', initialFrames = null, initialFrameIndex = 0, initialWidth = 800, initialHeight = 600) {
             mainMenu.classList.add('hidden');
             editorContainer.classList.remove('hidden');
 
             currentProjectId = projectId;
             currentProjectName = projectName;
 
-            if (initialFrames) {
+            canvas.width = initialWidth;
+            canvas.height = initialHeight;
+
+            if (initialFrames && initialFrames.length > 0) {
                 frames = initialFrames;
                 currentFrameIndex = initialFrameIndex;
             } else {
-                canvas.width = parseInt(canvasWidthInput.value) || 800;
-                canvas.height = parseInt(canvasHeightInput.value) || 600;
                 context.clearRect(0, 0, canvas.width, canvas.height);
                 frames = [canvas.toDataURL('image/png')];
                 currentFrameIndex = 0;
@@ -964,282 +1095,272 @@
             if (autoSaveIntervalId) {
                 clearInterval(autoSaveIntervalId);
             }
-            if (currentProjectId) {
-                autoSaveIntervalId = setInterval(autoSave, 10000);
-            }
+            // Auto-save always runs, deciding whether to save to Firebase or LocalStorage based on currentProjectId and firebaseUsable status
+            autoSaveIntervalId = setInterval(autoSave, 10000);
         }
 
         async function autoSave() {
-            if (currentProjectId) {
-                saveCurrentFrame();
+            // If it's a Firebase project AND Firebase is configured and usable, save to cloud
+            if (currentProjectId && window.firebaseUsable() && window.firebaseInitialized) {
+                saveCurrentFrame(); // Always save frame to internal array first
                 await saveProjectToFirestore(currentProjectId, currentProjectName, frames, currentFrameIndex);
+            } else if (!currentProjectId) { // Otherwise, if it's a new/local project (no currentProjectId), save locally
+                saveCurrentFrame(); // Always save frame to internal array first
+                saveCurrentProjectLocally();
             }
-        }
-
-        async function loadProjectsListMain() {
-            if (!window.firebaseInitialized) {
-                mainProjectsListContainer.innerHTML = '<p class="text-red-500">Firebase not initialized. Cannot load projects.</p>';
-                return;
-            }
-            try {
-                const projectsCollectionRef = window.getCollection('projects');
-                const q = window.query(projectsCollectionRef);
-                
-                window.onSnapshot(q, (querySnapshot) => {
-                    mainProjectsListContainer.innerHTML = '';
-                    if (querySnapshot.empty) {
-                        mainProjectsListContainer.innerHTML = '<p class="text-gray-500">No projects saved yet. Click "Create New Project" to start!</p>';
-                        return;
-                    }
-                    querySnapshot.forEach((doc) => {
-                        const project = doc.data();
-                        const projectId = doc.id;
-                        const projectElement = document.createElement('div');
-                        projectElement.classList.add('flex', 'items-center', 'justify-between', 'p-3', 'bg-gray-50', 'rounded-lg', 'shadow-sm', 'border', 'border-gray-200');
-                        projectElement.innerHTML = `
-                            <span class="font-medium text-gray-800 truncate">${project.name}</span>
-                            <div class="flex space-x-2">
-                                <button data-project-id="${projectId}" data-project-name="${project.name}" class="load-project-btn bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600">Load</button>
-                                <button data-project-id="${projectId}" data-project-name="${project.name}" class="delete-project-btn bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600">Delete</button>
-                            </div>
-                        `;
-                        mainProjectsListContainer.appendChild(projectElement);
-                    });
-
-                    document.querySelectorAll('.load-project-btn').forEach(button => {
-                        button.onclick = () => {
-                            loadProjectFromFirestore(button.dataset.projectId);
-                        };
-                    });
-                    document.querySelectorAll('.delete-project-btn').forEach(button => {
-                        button.onclick = () => {
-                            deleteProjectFromFirestore(button.dataset.projectId, button.dataset.projectName);
-                        };
-                    });
-                });
-            } catch (error) {
-                console.error("Error fetching projects list:", error);
-                mainProjectsListContainer.innerHTML = '<p class="text-red-500">Error loading projects.</p>';
-            }
+            // If it's a Firebase project but Firebase isn't usable, no auto-save happens (user needs to manually save as local if desired)
         }
 
         async function handleGoogleSignIn() {
-            if (!window.firebaseInitialized) {
-                showMessage("Firebase not initialized. Please wait or refresh.");
-                return;
-            }
-            try {
-                const provider = new GoogleAuthProvider();
-                const result = await signInWithPopup(window.getAuthInstance(), provider);
-                const user = result.user;
-                showMessage(`Signed in as ${user.displayName || user.email}!`);
-            } catch (error) {
-                console.error("Google Sign-In Error:", error);
-                let errorMessage = "Google Sign-In failed.";
-                if (error.code === 'auth/popup-closed-by-user') {
-                    errorMessage = "Google Sign-In cancelled.";
-                } else if (error.code === 'auth/cancelled-popup-request') {
-                    errorMessage = "Another sign-in pop-up is already open. Please close it and try again.";
-                } else if (error.code === 'auth/unauthorized-domain') {
-                    errorMessage = "Google Sign-In failed: Unauthorized domain. Please add this domain to your Firebase project's authorized domains in the Firebase Console (Authentication -> Settings).";
-                }
-                showMessage(errorMessage);
-            }
+            showMessage("Google Sign-In coming soon!");
+            // if (!window.firebaseInitialized || !window.firebaseUsable()) {
+            //     showMessage("Firebase not initialized or configured. Please wait or refresh.");
+            //     return;
+            // }
+            // try {
+            //     const provider = new GoogleAuthProvider();
+            //     const result = await signInWithPopup(window.getAuthInstance(), provider);
+            //     const user = result.user;
+            //     showMessage(`Signed in as ${user.displayName || user.email}!`);
+            // } catch (error) {
+            //     console.error("Google Sign-In Error:", error);
+            //     let errorMessage = "Google Sign-In failed.";
+            //     if (error.code === 'auth/popup-closed-by-user') {
+            //         errorMessage = "Google Sign-In cancelled.";
+            //     } else if (error.code === 'auth/cancelled-popup-request') {
+            //         errorMessage = "Another sign-in pop-up is already open. Please close it and try again.";
+            //     } else if (error.code === 'auth/unauthorized-domain') {
+            //         errorMessage = "Google Sign-In failed: Unauthorized domain. Please add this domain (e.g., github.io) to your Firebase project's authorized domains in the Firebase Console (Authentication -> Settings).";
+            //     }
+            //     showMessage(errorMessage);
+            // }
         }
 
-        window.onload = function() {
-            window.initializeFirebase();
-            showMainMenu();
+        // Initial app state setup
+        async function initializeAppState() {
+            await window.initializeFirebase(); // Firebase is initialized, but may not be usable
 
+            if (window.firebaseUsable() && window.firebaseInitialized) {
+                // Firebase is ready, show main menu and load cloud projects
+                showMainMenu();
+                userIdDisplay.textContent = window.getUserId();
+                // loadProjectsListMain() is called by showMainMenu
+            } else {
+                // Firebase not usable or initialized, fall back to local storage
+                console.log("DEVELOPER NOTE: Firebase not fully configured or usable. Attempting to load last local project.");
+                userIdDisplay.textContent = "Guest (Local Only)";
+                const localProjectData = loadLastProjectLocally();
+                if (localProjectData) {
+                    // If a local project was loaded, go directly to editor with that project
+                    currentProjectId = null; // Ensure it's treated as a local project
+                    showEditor(null, localProjectData.name, localProjectData.frames, localProjectData.currentFrameIndex, localProjectData.width, localProjectData.height);
+                    showMessage("Loaded last local project from your browser.");
+                } else {
+                    // No local project found, show main menu with a message about local only
+                    showMainMenu(); // Show main menu to allow creating new project
+                    mainProjectsListContainer.innerHTML = '<p class="text-red-500">Cloud saving/loading disabled. No local project found. Click "Create New Project" to start!</p>';
+                }
+            }
+
+            // Set initial canvas properties
             context.lineCap = 'round';
             context.lineJoin = 'round';
             context.strokeStyle = brushColor;
             context.lineWidth = brushSize;
 
+            // Initial tool state
             brushToolBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
             brushToolBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
             eraserToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
             fillToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
 
+            // Initial playback button states
             pauseBtn.disabled = true;
             stopBtn.disabled = true;
             exportGifBtn.disabled = false;
 
-            saveAsProjectBtn.addEventListener('click', () => {
-                saveCurrentFrame();
-                saveAsModal.classList.remove('hidden');
-                projectNameInput.value = currentProjectName === 'Untitled Project' ? '' : currentProjectName;
-                projectNameInput.focus();
-            });
+            // Disable cloud saving button if Firebase isn't usable
+            if (!window.firebaseUsable()) {
+                saveAsProjectBtn.disabled = true;
+                saveAsProjectBtn.textContent = "Save As... (Offline)";
+                saveAsProjectBtn.title = "Cloud saving is disabled because Firebase is not configured.";
+            } else {
+                saveAsProjectBtn.disabled = false;
+                saveAsProjectBtn.textContent = "Save As...";
+                saveAsProjectBtn.title = "Save project to cloud.";
+            }
+        }
 
-            cancelSaveAsBtn.addEventListener('click', () => {
-                saveAsModal.classList.add('hidden');
-            });
+        window.onload = initializeAppState; // Entry point for the application
 
-            confirmSaveAsBtn.addEventListener('click', async () => {
-                const projectName = projectNameInput.value.trim();
-                if (!projectName) {
-                    showMessage('Project name cannot be empty.');
-                    return;
-                }
-                const newProjectId = window.crypto.randomUUID();
-                await saveProjectToFirestore(newProjectId, projectName, frames, currentFrameIndex);
-                saveAsModal.classList.add('hidden');
-            });
+        // Event Listeners
+        saveAsProjectBtn.addEventListener('click', () => {
+            if (!window.firebaseUsable()) {
+                showMessage("Cloud saving is disabled. Cannot save to Firebase.");
+                return;
+            }
+            saveCurrentFrame(); // Ensure current drawing is saved to frame data before opening modal
+            saveAsModal.classList.remove('hidden');
+            projectNameInput.value = currentProjectName === 'Untitled Project' ? '' : currentProjectName;
+            projectNameInput.focus();
+        });
 
-            backToMainMenuBtn.addEventListener('click', () => {
-                saveCurrentFrame();
-                if (currentProjectId) {
-                    autoSave();
-                }
-                showMainMenu();
-            });
+        cancelSaveAsBtn.addEventListener('click', () => {
+            saveAsModal.classList.add('hidden');
+        });
 
-            createNewProjectBtn.addEventListener('click', () => {
-                createProjectModal.classList.remove('hidden');
-                canvasWidthInput.value = 800;
-                canvasHeightInput.value = 600;
-            });
+        confirmSaveAsBtn.addEventListener('click', async () => {
+            const projectName = projectNameInput.value.trim();
+            if (!projectName) {
+                showMessage('Project name cannot be empty.');
+                return;
+            }
+            const newProjectId = window.crypto.randomUUID(); // Generate new ID for saving
+            await saveProjectToFirestore(newProjectId, projectName, frames, currentFrameIndex);
+            saveAsModal.classList.add('hidden');
+        });
 
-            googleSignInBtn.addEventListener('click', handleGoogleSignIn);
+        backToMainMenuBtn.addEventListener('click', () => {
+            saveCurrentFrame(); // Ensure current drawing is saved to frame data
+            // autoSave() will handle saving to cloud or local storage depending on currentProjectId
+            autoSave(); 
+            showMainMenu();
+        });
 
-            cancelCreateProjectBtn.addEventListener('click', () => {
-                createProjectModal.classList.add('hidden');
-            });
+        createNewProjectBtn.addEventListener('click', () => {
+            createProjectModal.classList.remove('hidden');
+            canvasWidthInput.value = 800;
+            canvasHeightInput.value = 600;
+        });
 
-            confirmCreateProjectBtn.addEventListener('click', () => {
-                const width = parseInt(canvasWidthInput.value);
-                const height = parseInt(canvasHeightInput.value);
+        googleSignInBtn.addEventListener('click', handleGoogleSignIn);
 
-                if (isNaN(width) || isNaN(height) || width < 100 || width > 2000 || height < 100 || height > 2000) {
-                    showMessage('Please enter valid canvas dimensions (100-2000px).');
-                    return;
-                }
-                createProjectModal.classList.add('hidden');
-                showEditor(null, 'Untitled Project', null, 0);
-            });
+        cancelCreateProjectBtn.addEventListener('click', () => {
+            createProjectModal.classList.add('hidden');
+        });
 
-            brushToolBtn.addEventListener('click', () => {
-                tool = 'brush';
-                brushToolBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
-                brushToolBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-                eraserToolBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
-                eraserToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-                fillToolBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
-                fillToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-                context.strokeStyle = brushColor;
-            });
-            eraserToolBtn.addEventListener('click', () => {
-                tool = 'eraser';
-                eraserToolBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
-                eraserToolBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-                brushToolBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
-                brushToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-                fillToolBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
-                fillToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-            });
-            fillToolBtn.addEventListener('click', () => {
-                tool = 'fill';
-                fillToolBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
-                fillToolBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-                brushToolBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
-                brushToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-                eraserToolBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
-                eraserToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-            });
+        confirmCreateProjectBtn.addEventListener('click', () => {
+            const width = parseInt(canvasWidthInput.value);
+            const height = parseInt(canvasHeightInput.value);
 
-            brushColorInput.addEventListener('input', (e) => {
-                brushColor = e.target.value;
-                context.strokeStyle = brushColor;
-            });
+            if (isNaN(width) || isNaN(height) || width < 100 || width > 2000 || height < 100 || height > 2000) {
+                showMessage('Please enter valid canvas dimensions (100-2000px).');
+                return;
+            }
+            createProjectModal.classList.add('hidden');
+            // For new local projects, projectId is null
+            showEditor(null, 'Untitled Project', null, 0, width, height);
+            saveCurrentProjectLocally(); // Immediately save this new, blank project locally
+        });
 
-            brushSizeInput.addEventListener('input', (e) => {
-                brushSize = parseInt(e.target.value);
-                brushSizeValueSpan.textContent = `${brushSize}px`;
-                context.lineWidth = brushSize;
-            });
+        brushToolBtn.addEventListener('click', () => {
+            tool = 'brush';
+            brushToolBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
+            brushToolBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
+            eraserToolBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
+            eraserToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
+            fillToolBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
+            fillToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
+            context.strokeStyle = brushColor;
+        });
+        eraserToolBtn.addEventListener('click', () => {
+            tool = 'eraser';
+            eraserToolBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
+            eraserToolBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
+            brushToolBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
+            brushToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
+            fillToolBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
+            fillToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
+        });
+        fillToolBtn.addEventListener('click', () => {
+            tool = 'fill';
+            fillToolBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
+            fillToolBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
+            brushToolBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
+            brushToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
+            eraserToolBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
+            eraserToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
+        });
 
-            canvas.addEventListener('mousedown', startDrawing);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', stopDrawing);
-            canvas.addEventListener('mouseleave', stopDrawing);
+        brushColorInput.addEventListener('input', (e) => {
+            brushColor = e.target.value;
+            context.strokeStyle = brushColor;
+        });
 
-            addFrameBtn.addEventListener('click', addFrame);
-            deleteFrameBtn.addEventListener('click', deleteFrame);
-            duplicateFrameBtn.addEventListener('click', duplicateFrame);
-            clearCurrentFrameBtn.addEventListener('click', clearCurrentFrame);
+        brushSizeInput.addEventListener('input', (e) => {
+            brushSize = parseInt(e.target.value);
+            brushSizeValueSpan.textContent = `${brushSize}px`;
+            context.lineWidth = brushSize;
+        });
 
-            exportGifBtn.addEventListener('click', exportGif);
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseleave', stopDrawing);
 
-            playBtn.addEventListener('click', playAnimation);
-            pauseBtn.addEventListener('click', pauseAnimation);
-            stopBtn.addEventListener('click', stopAnimation);
-            animationSpeedInput.addEventListener('input', (e) => {
-                animationSpeed = parseInt(e.target.value);
-                animationSpeedValueSpan.textContent = animationSpeed;
-                if (isPlaying) {
-                    pauseAnimation();
-                    playAnimation();
-                }
-            });
+        addFrameBtn.addEventListener('click', addFrame);
+        deleteFrameBtn.addEventListener('click', deleteFrame);
+        duplicateFrameBtn.addEventListener('click', duplicateFrame);
+        clearCurrentFrameBtn.addEventListener('click', clearCurrentFrame);
 
-            onionSkinEnabledCheckbox.addEventListener('change', (e) => {
-                onionSkinEnabled = e.target.checked;
-                onionSkinControlsDiv.style.display = onionSkinEnabled ? 'block' : 'none';
-                renderCanvasContent();
-            });
-            onionPrevInput.addEventListener('input', (e) => {
-                onionPrevCount = parseInt(e.target.value);
-                onionPrevValueSpan.textContent = onionPrevCount;
-                renderCanvasContent();
-            });
-            onionNextInput.addEventListener('input', (e) => {
-                onionNextCount = parseInt(e.target.value);
-                onionNextValueSpan.textContent = onionNextCount;
-                renderCanvasContent();
-            });
-            onionOpacityInput.addEventListener('input', (e) => {
-                onionOpacity = parseFloat(e.target.value);
-                onionOpacityValueSpan.textContent = `${(onionOpacity * 100).toFixed(0)}%`;
-                renderCanvasContent();
-            });
-            onionPrevColorInput.addEventListener('input', (e) => {
-                onionPrevColor = e.target.value;
-                renderCanvasContent();
-            });
-            onionNextColorInput.addEventListener('input', (e) => {
-                onionNextColor = e.target.value;
-                renderCanvasContent();
-            });
+        exportGifBtn.addEventListener('click', exportGif);
 
-            generateIdeaBtn.addEventListener('click', () => {
-                ideaModal.classList.remove('hidden');
-                generatedIdeaOutput.classList.add('hidden');
-                ideaText.textContent = '';
-                ideaPromptInput.value = '';
-            });
-            closeIdeaModalBtn.addEventListener('click', () => {
-                ideaModal.classList.add('hidden');
-            });
-            getIdeaBtn.addEventListener('click', generateFrameIdea);
+        playBtn.addEventListener('click', playAnimation);
+        pauseBtn.addEventListener('click', pauseAnimation);
+        stopBtn.addEventListener('click', stopAnimation);
+        animationSpeedInput.addEventListener('input', (e) => {
+            animationSpeed = parseInt(e.target.value);
+            animationSpeedValueSpan.textContent = animationSpeed;
+            if (isPlaying) {
+                pauseAnimation();
+                playAnimation();
+            }
+        });
 
-            window.addEventListener('resize', () => {
-                const currentFrameData = canvas.toDataURL('image/png');
-                canvas.width = canvas.offsetWidth;
-                canvas.height = canvas.offsetHeight;
-                const img = new Image();
-                img.src = currentFrameData;
-                img.onload = () => {
-                    context.clearRect(0, 0, canvas.width, canvas.height);
-                    context.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    context.lineCap = 'round';
-                    context.lineJoin = 'round';
-                    context.strokeStyle = brushColor;
-                    context.lineWidth = brushSize;
-                    renderCanvasContent();
-                };
-            });
-        };
+        onionSkinEnabledCheckbox.addEventListener('change', (e) => {
+            onionSkinEnabled = e.target.checked;
+            onionSkinControlsDiv.style.display = onionSkinEnabled ? 'block' : 'none';
+            renderCanvasContent();
+        });
+        onionPrevInput.addEventListener('input', (e) => {
+            onionPrevCount = parseInt(e.target.value);
+            onionPrevValueSpan.textContent = onionPrevCount;
+            renderCanvasContent();
+        });
+        onionNextInput.addEventListener('input', (e) => {
+            onionNextCount = parseInt(e.target.value);
+            onionNextValueSpan.textContent = onionNextCount;
+            renderCanvasContent();
+        });
+        onionOpacityInput.addEventListener('input', (e) => {
+            onionOpacity = parseFloat(e.target.value);
+            onionOpacityValueSpan.textContent = `${(onionOpacity * 100).toFixed(0)}%`;
+            renderCanvasContent();
+        });
+        onionPrevColorInput.addEventListener('input', (e) => {
+            onionPrevColor = e.target.value;
+            renderCanvasContent();
+        });
+        onionNextColorInput.addEventListener('input', (e) => {
+            onionNextColor = e.target.value;
+            renderCanvasContent();
+        });
+
+        generateIdeaBtn.addEventListener('click', () => {
+            ideaModal.classList.remove('hidden');
+            generatedIdeaOutput.classList.add('hidden');
+            ideaText.textContent = '';
+            ideaPromptInput.value = '';
+        });
+        closeIdeaModalBtn.addEventListener('click', () => {
+            ideaModal.classList.add('hidden');
+        });
+        getIdeaBtn.addEventListener('click', generateFrameIdea);
+
+        window.addEventListener('resize', () => {
+            // Re-render canvas content to adapt to new size, if applicable
+            renderCanvasContent();
+        });
     </script>
 </body>
 </html>
