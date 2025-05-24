@@ -21,7 +21,7 @@
             box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
             width: 100%;
             height: 100%;
-            touch-action: none; /* Prevents default touch actions like scrolling/zooming */
+            touch-action: none;
         }
         .flex-grow-container {
             flex-grow: 1;
@@ -82,12 +82,12 @@
             min-width: 50px;
         }
         .zoom-info {
-            font-size: 0.875rem; /* Adjusted font size for better readability in modal */
-            color: #4b5563; /* Darker gray for better contrast */
+            font-size: 0.875rem;
+            color: #4b5563;
             line-height: 1.5;
         }
         .zoom-info ul {
-            padding-left: 1.25rem; /* Indent list items */
+            padding-left: 1.25rem;
         }
         .zoom-info kbd {
             display: inline-block;
@@ -102,33 +102,23 @@
             border-radius: 0.25rem;
             box-shadow: inset 0 -1px 0 #a0aec0;
         }
-        /* Fixed message display */
-        #messageDisplay {
-            position: fixed;
-            top: 1rem; /* Adjust as needed */
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000; /* Ensure it's on top of other content */
-            min-width: 250px;
-            text-align: center;
-        }
         .help-icon {
             display: inline-flex;
             justify-content: center;
             align-items: center;
-            width: 1.25rem; /* w-5 */
-            height: 1.25rem; /* h-5 */
-            border-radius: 9999px; /* rounded-full */
-            background-color: #9ca3af; /* gray-400 */
-            color: #ffffff; /* text-white */
-            font-size: 0.75rem; /* text-xs */
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 9999px;
+            background-color: #9ca3af;
+            color: #ffffff;
+            font-size: 0.75rem;
             font-weight: bold;
             cursor: pointer;
-            margin-left: 0.5rem; /* ml-2 */
+            margin-left: 0.5rem;
             transition: background-color 0.2s;
         }
         .help-icon:hover {
-            background-color: #6b7280; /* gray-500 */
+            background-color: #6b7280;
         }
     </style>
 </head>
@@ -137,8 +127,6 @@
     <h1 class="text-4xl sm:text-5xl font-extrabold text-blue-800 mb-4 text-center">
         ToonStart Animation Editor <span class="text-xs font-normal align-top ml-2 text-gray-600">S.H. - S.S.</span>
     </h1>
-
-    <div id="messageDisplay" class="hidden bg-blue-500 text-white px-4 py-2 rounded-lg mb-4 shadow-md transition-opacity duration-500 opacity-0"></div>
 
     <div class="flex w-full max-w-6xl bg-white rounded-xl shadow-lg overflow-hidden flex-grow flex-grow-container">
         <div id="staticToolbox">
@@ -149,6 +137,8 @@
                         <button id="brushTool" class="tool-button bg-blue-600 text-white shadow-md">✎</button>
                         <button id="eraserTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">🩹</button>
                         <button id="fillTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">🪣</button>
+                        <button id="eyedropperTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">💉</button>
+                        <button id="panTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">✋</button>
                     </div>
                     <div class="mt-4 flex items-center">
                         <input type="checkbox" id="stylusOnlyModeToggle" class="mr-2 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
@@ -167,6 +157,15 @@
                     <input type="range" id="brushSize" min="1" max="50" value="5" class="bg-gray-300 rounded-lg appearance-none cursor-pointer">
                 </div>
 
+                <!-- <div class="toolbox-section">
+                    <h2>Zoom & Pan</h2>
+                    <div class="flex flex-col space-y-1">
+                        <label for="zoomLevel">Zoom: <span id="zoomLevelValue" class="font-bold">100%</span></label>
+                        <input type="range" id="zoomLevel" min="10" max="500" value="100" class="bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                        <button id="resetZoomPanBtn" class="bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-400 text-sm">Reset Zoom/Pan</button>
+                    </div>
+                </div> -->
+
                 <div class="toolbox-section">
                     <h2>Frames</h2>
                     <div class="flex flex-col space-y-1">
@@ -184,6 +183,28 @@
                         <button id="redoBtn" class="bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-400 text-sm" disabled>↪️ Redo</button>
                     </div>
                 </div>
+
+                <!-- <div class="toolbox-section">
+                    <h2>Onion Skinning</h2>
+                    <div class="flex items-center mb-2">
+                        <input type="checkbox" id="onionSkinToggle" class="mr-2 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                        <label for="onionSkinToggle" class="text-sm font-medium text-gray-700">Enable Onion Skin</label>
+                    </div>
+                    <div id="onionSkinControls" class="space-y-2 hidden">
+                        <div>
+                            <label for="onionSkinPrevCount" class="block text-sm font-medium text-gray-700">Previous Frames: <span id="onionSkinPrevCountValue" class="font-bold">1</span></label>
+                            <input type="range" id="onionSkinPrevCount" min="0" max="5" value="1" class="w-full bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div>
+                            <label for="onionSkinNextCount" class="block text-sm font-medium text-gray-700">Next Frames: <span id="onionSkinNextCountValue" class="font-bold">1</span></label>
+                            <input type="range" id="onionSkinNextCount" min="0" max="5" value="1" class="w-full bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div>
+                            <label for="onionSkinOpacity" class="block text-sm font-medium text-gray-700">Opacity: <span id="onionSkinOpacityValue" class="font-bold">30%</span></label>
+                            <input type="range" id="onionSkinOpacity" min="0.1" max="1.0" step="0.05" value="0.3" class="w-full bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                    </div>
+                </div> -->
 
                 <div class="toolbox-section">
                     <h2>Project</h2>
@@ -204,10 +225,15 @@
                 </div>
 
                 <div class="toolbox-section">
-                    <h2>Help</h2>
-                    <button id="helpBtn" class="bg-gray-400 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-500 text-sm w-full">
-                        ❓ Help
-                    </button>
+                    <h2>Info</h2>
+                    <div class="flex flex-col space-y-1">
+                        <button id="helpBtn" class="bg-gray-400 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-500 text-sm w-full">
+                            ❓ Help
+                        </button>
+                        <button id="updatesBtn" class="bg-gray-400 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-500 text-sm w-full">
+                            ✨ Updates
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -231,7 +257,7 @@
                     </button>
                 </div>
                 <div class="flex items-center gap-2 mt-2 sm:mt-0">
-                    <label for="animationSpeed" class="text-gray-700">FPS:</label>
+                    <label for="animationSpeed">FPS:</label>
                     <input type="range" id="animationSpeed" min="1" max="30" value="10" class="w-24 h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
                     <span id="animationSpeedValue" class="font-bold text-gray-800">10</span>
                 </div>
@@ -269,24 +295,27 @@
 
     <div id="helpModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
-            <h3 class="text-2xl font-bold text-gray-800 mb-4">❓ Help & View Tips</h3>
+            <h3 class="2xl font-bold text-gray-800 mb-4">❓ Help & View Tips</h3>
             <p class="zoom-info mb-4">
                 If parts of the editor content appear cut off or you want to see more, you can adjust your browser's zoom level:
             </p>
             <ul class="zoom-info list-disc list-inside space-y-2">
                 <li>
-                    <span class="font-semibold">Zoom Out:</span>
+                    <span class="font-semibold">Browser Zoom Out:</span>
                     <br>
                     <kbd>Cmd</kbd> + <kbd>-</kbd> (Mac)
                     <br>
                     <kbd>Ctrl</kbd> + <kbd>-</kbd> (Windows)
                 </li>
                 <li>
-                    <span class="font-semibold">Reset Zoom to 100%:</span>
+                    <span class="font-semibold">Browser Reset Zoom to 100%:</span>
                     <br>
                     <kbd>Cmd</kbd> + <kbd>0</kbd> (Mac)
                     <br>
                     <kbd>Ctrl</kbd> + <kbd>0</kbd> (Windows)
+                </li>
+                <li>
+                    <span class="font-semibold">Canvas Pan:</span> Click and drag with the "✋ Hand" tool to pan.
                 </li>
             </ul>
             <button id="closeHelpModalBtn" class="mt-6 w-full bg-gray-300 text-gray-800 px-4 py-3 rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-200">
@@ -297,9 +326,9 @@
 
     <div id="palmRejectionHelpModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
-            <h3 class="text-2xl font-bold text-gray-800 mb-4">🖐️ What is Palm Rejection?</h3>
+            <h3 class="2xl font-bold text-gray-800 mb-4">🖐️ What is Palm Rejection?</h3>
             <p class="text-gray-700 mb-4">
-                When "Palm Rejection" is enabled, the drawing canvas will **only respond to input from a digital pen or stylus**.
+                When "Palm Rejection" is enabled, the drawing canvas will <strong>only respond to input from a digital pen or stylus</strong>.
             </p>
             <p class="text-gray-700 mb-4">
                 Touches from your fingers or palm will be ignored, allowing you to rest your hand on the screen while drawing without making accidental marks.
@@ -313,20 +342,69 @@
         </div>
     </div>
 
+    <div id="updatesModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">✨ ToonStart Updates</h3>
+            <div id="updatesContent" class="text-gray-700 space-y-4">
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700">May 24, 2025 - Core Drawing Improvements</h4>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><strong>Fixed Drawing:</strong> Drawing tools now work correctly and responsively.</li>
+                        <li><strong>Fixed Fill Tool:</strong> Now accurately fills areas regardless of pan.</li>
+                        <li><strong>Fixed Eyedropper Tool:</strong> Accurately picks colors from the canvas.</li>
+                        <li>**Enhanced Responsiveness:** Significant performance improvements for drawing and canvas interactions.</li>
+                        <li>**Removed Zoom Feature:** Canvas no longer supports zoom, focusing on direct drawing.</li>
+                        <li>**Pipette Icon Update:** Changed to 💉 emoji.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700">May 23, 2025 - Initial Feature Enhancements</h4>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><strong>Undo/Redo History:</strong> Easily correct mistakes with multiple steps.</li>
+                        <li><strong>Pan Tool:</strong> Navigate the canvas for detailed work or overview.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700">May 22, 2025 - Basic Drawing & Animation</h4>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><strong>Basic Drawing Tools:</strong> Brush, Eraser, Fill.</li>
+                        <li><strong>Frame Management:</strong> Add, delete, duplicate, clear frames.</li>
+                        <li><strong>Animation Playback:</strong> Play, pause, stop animation with adjustable speed.</li>
+                        <li><strong>Project Save/Load:</strong> Save and load your animation projects locally.</li>
+                        <li><strong>GIF Export:</strong> Export your animation as a GIF.</li>
+                        <li><strong>AI Idea Generator:</strong> Get creative ideas for your frames.</li>
+                        <li><strong>Touch Support:</strong> Basic drawing on touch devices like iPad.</li>
+                        <li><strong>Palm Rejection:</strong> Option to enable stylus-only drawing.</li>
+                    </ul>
+                </div>
+            </div>
+            <button id="closeUpdatesModalBtn" class="mt-6 w-full bg-gray-300 text-gray-800 px-4 py-3 rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-200">
+                Close
+            </button>
+        </div>
+    </div>
+
+
     <script>
         const canvas = document.getElementById('drawingCanvas');
         const context = canvas.getContext('2d');
-        const messageDisplay = document.getElementById('messageDisplay');
+
+        const drawingBufferCanvas = document.createElement('canvas');
+        const drawingBufferContext = drawingBufferCanvas.getContext('2d');
 
         const brushToolBtn = document.getElementById('brushTool');
         const eraserToolBtn = document.getElementById('eraserTool');
         const fillToolBtn = document.getElementById('fillTool');
+        const eyedropperToolBtn = document.getElementById('eyedropperTool');
+        const panToolBtn = document.getElementById('panTool');
         const brushColorInput = document.getElementById('brushColor');
         const brushSizeInput = document.getElementById('brushSize');
         const brushSizeValueSpan = document.getElementById('brushSizeValue');
 
         const stylusOnlyModeToggle = document.getElementById('stylusOnlyModeToggle');
         let isStylusOnlyModeEnabled = false;
+
+        // Removed zoom-related elements: zoomLevelInput, zoomLevelValueSpan, resetZoomPanBtn
 
         const addFrameBtn = document.getElementById('addFrame');
         const deleteFrameBtn = document.getElementById('deleteFrame');
@@ -353,17 +431,22 @@
         const ideaText = document.getElementById('ideaText');
         const closeIdeaModalBtn = document.getElementById('closeIdeaModalBtn');
 
-        const helpBtn = document.getElementById('helpBtn');
+        const helpBtn = document.getElementById('helpBtn'); // Corrected assignment
         const helpModal = document.getElementById('helpModal');
         const closeHelpModalBtn = document.getElementById('closeHelpModalBtn');
 
         const undoBtn = document.getElementById('undoBtn');
         const redoBtn = document.getElementById('redoBtn');
 
-        // New Palm Rejection Help elements
         const palmRejectionHelpIcon = document.getElementById('palmRejectionHelpIcon');
         const palmRejectionHelpModal = document.getElementById('palmRejectionHelpModal');
         const closePalmRejectionHelpModalBtn = document.getElementById('closePalmRejectionHelpModalBtn');
+
+        const updatesBtn = document.getElementById('updatesBtn');
+        const updatesModal = document.getElementById('updatesModal');
+        const closeUpdatesModalBtn = document.getElementById('closeUpdatesModalBtn');
+
+        // Removed onion skinning related elements
 
         let isDrawing = false;
         let brushColor = '#000000';
@@ -380,28 +463,16 @@
         let isExporting = false;
         let exportProgress = 0;
 
-        // History for Undo/Redo
         let history = [];
         let historyPointer = -1;
-        const MAX_HISTORY_STATES = 50; 
+        const MAX_HISTORY_STATES = 50;
 
-        function showMessage(msg) {
-            // Clear any existing timeout to prevent messages from overlapping or being cut short
-            if (messageDisplay._timeoutId) {
-                clearTimeout(messageDisplay._timeoutId);
-            }
-            messageDisplay.textContent = msg;
-            messageDisplay.classList.remove('hidden', 'opacity-0');
-            messageDisplay.classList.add('opacity-100');
-            
-            // Set a new timeout
-            messageDisplay._timeoutId = setTimeout(() => {
-                messageDisplay.classList.remove('opacity-100');
-                messageDisplay.classList.add('opacity-0');
-                // After fade out, hide the element completely
-                messageDisplay._timeoutId = setTimeout(() => messageDisplay.classList.add('hidden'), 500);
-            }, 2000); // Message visible for 2 seconds before fading out
-        }
+        // Removed scale variable
+        let panOffset = { x: 0, y: 0 };
+        let isPanning = false;
+        let lastPanPoint = { x: 0, y: 0 };
+        
+        const loadedImageCache = new Map();
 
         function hexToRgba(hex) {
             const r = parseInt(hex.slice(1, 3), 16);
@@ -410,48 +481,25 @@
             return [r, g, b, 255];
         }
 
-        const loadImage = (src) => {
+        function rgbaToHex(r, g, b) {
+            return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
+        }
+
+        function loadImage(src) {
+            if (loadedImageCache.has(src)) {
+                return Promise.resolve(loadedImageCache.get(src));
+            }
             return new Promise((resolve, reject) => {
                 const img = new Image();
-                img.onload = () => resolve(img);
+                img.onload = () => {
+                    loadedImageCache.set(src, img);
+                    resolve(img);
+                };
                 img.onerror = reject;
                 img.src = src;
             });
-        };
-
-        async function renderCanvasContent() {
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.fillStyle = '#ffffff';
-            context.fillRect(0, 0, canvas.width, canvas.height);
-
-            const currentFrameData = frames[currentFrameIndex];
-            if (currentFrameData && currentFrameData.startsWith('data:image/png;base64,')) {
-                try {
-                    const img = await loadImage(currentFrameData);
-                    context.save();
-                    context.globalCompositeOperation = 'source-over';
-                    context.globalAlpha = 1.0;
-                    context.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    context.restore();
-                } catch (error) {
-                    console.error("Error loading current frame image data:", error);
-                    context.fillStyle = '#ffffff';
-                    context.fillRect(0, 0, canvas.width, canvas.height);
-                }
-            } else {
-                context.fillStyle = '#ffffff';
-                context.fillRect(0, 0, canvas.width, canvas.height);
-            }
-
-            context.globalAlpha = 1.0;
-            context.globalCompositeOperation = 'source-over';
         }
 
-        function saveCurrentFrame() {
-            frames[currentFrameIndex] = canvas.toDataURL('image/png');
-        }
-
-        // --- History Management ---
         function saveState() {
             if (historyPointer < history.length - 1) {
                 history = history.slice(0, historyPointer + 1);
@@ -470,10 +518,9 @@
             if (historyPointer > 0) {
                 historyPointer--;
                 frames = JSON.parse(JSON.stringify(history[historyPointer]));
-                renderCanvasContent();
+                loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load into buffer then render
                 updateTimeline();
                 updateUndoRedoButtons();
-                showMessage('Undo successful!');
             }
         }
 
@@ -481,10 +528,9 @@
             if (historyPointer < history.length - 1) {
                 historyPointer++;
                 frames = JSON.parse(JSON.stringify(history[historyPointer]));
-                renderCanvasContent();
+                loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load into buffer then render
                 updateTimeline();
                 updateUndoRedoButtons();
-                showMessage('Redo successful!');
             }
         }
 
@@ -492,26 +538,59 @@
             undoBtn.disabled = !(historyPointer > 0);
             redoBtn.disabled = !(historyPointer < history.length - 1);
         }
-        // --- End History Management ---
 
-        // Unified event handler for mouse and touch start
-        function startDrawing(e) {
-            e.preventDefault(); // Prevent scrolling/zooming on touch devices
+        // New function to load frame data into the off-screen drawing buffer
+        async function loadFrameIntoBuffer(frameData) {
+            drawingBufferContext.clearRect(0, 0, drawingBufferCanvas.width, drawingBufferCanvas.height);
+            drawingBufferContext.fillStyle = '#ffffff';
+            drawingBufferContext.fillRect(0, 0, drawingBufferCanvas.width, drawingBufferCanvas.height);
 
-            const rect = canvas.getBoundingClientRect();
-            let clientX, clientY;
-
-            // Handle Stylus Only Mode
-            if (isStylusOnlyModeEnabled && e.touches && e.touches.length > 0) {
-                const touchType = e.touches[0].touchType || 'direct'; // Default to 'direct' if touchType is not provided
-                if (touchType === 'direct') {
-                    // This is a finger or palm touch, ignore it
-                    showMessage('Palm Rejection: Finger/palm input ignored.');
-                    isDrawing = false; // Ensure drawing state is off
-                    return; 
+            if (frameData && typeof frameData === 'string' && frameData.startsWith('data:image/png;base64,')) {
+                try {
+                    const img = loadedImageCache.get(frameData) || await loadImage(frameData);
+                    drawingBufferContext.drawImage(img, 0, 0, drawingBufferCanvas.width, drawingBufferCanvas.height);
+                } catch (error) {
+                    console.error("Error loading frame data into buffer:", error);
                 }
             }
+        }
+
+        function renderCanvasContent() {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.fillStyle = '#ffffff';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            context.save();
+            context.translate(panOffset.x, panOffset.y);
             
+            // Draw the drawingBufferCanvas onto the main canvas
+            context.drawImage(drawingBufferCanvas, 0, 0, drawingBufferCanvas.width, drawingBufferCanvas.height);
+
+            context.restore();
+            context.globalAlpha = 1.0;
+            context.globalCompositeOperation = 'source-over';
+        }
+
+        function saveCurrentFrame() {
+            frames[currentFrameIndex] = drawingBufferCanvas.toDataURL('image/png');
+        }
+
+        function getTransformedCoords(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            // Get coordinates relative to the visible canvas
+            const canvasX = clientX - rect.left;
+            const canvasY = clientY - rect.top;
+
+            // Reverse pan transformation to get coordinates on the original resolution drawing buffer
+            const x = (canvasX - panOffset.x);
+            const y = (canvasY - panOffset.y);
+            return { x, y };
+        }
+
+        function startDrawing(e) {
+            e.preventDefault();
+
+            let clientX, clientY;
             if (e.touches && e.touches.length > 0) {
                 clientX = e.touches[0].clientX;
                 clientY = e.touches[0].clientY;
@@ -520,41 +599,59 @@
                 clientY = e.clientY;
             }
 
-            const offsetX = clientX - rect.left;
-            const offsetY = clientY - rect.top;
-
-            if (tool === 'fill') {
-                floodFill(offsetX, offsetY, hexToRgba(brushColor));
-                saveCurrentFrame();
-                renderCanvasContent();
-                saveState(); 
-                return;
-            }
-
-            context.beginPath();
-            context.moveTo(offsetX, offsetY);
-            isDrawing = true;
-        }
-
-        // Unified event handler for mouse and touch move
-        function draw(e) {
-            e.preventDefault(); // Prevent scrolling/zooming on touch devices
-
-            // Handle Stylus Only Mode for ongoing touch
             if (isStylusOnlyModeEnabled && e.touches && e.touches.length > 0) {
                 const touchType = e.touches[0].touchType || 'direct';
                 if (touchType === 'direct') {
-                    // This is a finger or palm touch, ignore it
-                    isDrawing = false; // Stop drawing if it somehow started with finger/palm
+                    isDrawing = false;
                     return;
                 }
             }
 
-            if (!isDrawing) return;
+            if (tool === 'eyedropper') {
+                const rect = canvas.getBoundingClientRect();
+                const canvasX = clientX - rect.left;
+                const canvasY = clientY - rect.top;
+                
+                // Get pixel data from the *rendered* canvas at the exact screen coordinates
+                const imageData = context.getImageData(canvasX, canvasY, 1, 1).data;
+                brushColorInput.value = rgbaToHex(imageData[0], imageData[1], imageData[2]);
+                brushColor = brushColorInput.value;
+                drawingBufferContext.strokeStyle = brushColor; // Update buffer context
+                tool = 'brush';
+                updateToolButtons();
+                return;
+            }
 
-            const rect = canvas.getBoundingClientRect();
+            if (tool === 'pan') {
+                isPanning = true;
+                lastPanPoint = { x: clientX, y: clientY };
+                return;
+            }
+
+            if (tool === 'fill') {
+                const { x, y } = getTransformedCoords(clientX, clientY);
+                
+                loadFrameIntoBuffer(frames[currentFrameIndex]).then(() => { // Ensure buffer is up-to-date
+                    floodFill(x, y, hexToRgba(brushColor), drawingBufferContext, drawingBufferCanvas.width, drawingBufferCanvas.height);
+                    frames[currentFrameIndex] = drawingBufferCanvas.toDataURL('image/png');
+                    renderCanvasContent();
+                    saveState();
+                }).catch(error => {
+                    console.error("Error loading frame for fill:", error);
+                });
+                return;
+            }
+
+            const { x, y } = getTransformedCoords(clientX, clientY);
+            drawingBufferContext.beginPath();
+            drawingBufferContext.moveTo(x, y);
+            isDrawing = true;
+        }
+
+        function draw(e) {
+            e.preventDefault();
+
             let clientX, clientY;
-
             if (e.touches && e.touches.length > 0) {
                 clientX = e.touches[0].clientX;
                 clientY = e.touches[0].clientY;
@@ -563,38 +660,55 @@
                 clientY = e.clientY;
             }
 
-            const offsetX = clientX - rect.left;
-            const offsetY = clientY - rect.top;
-
-            context.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
-            context.lineTo(offsetX, offsetY);
-            context.stroke();
-        }
-
-        // Unified event handler for mouse and touch end/cancel
-        function stopDrawing(e) {
-            e.preventDefault(); // Prevent default touch actions
-
-            if (tool !== 'fill') {
-                // If isDrawing is true here, it means we were drawing with a stylus
-                if (isDrawing) { 
-                    context.closePath();
-                    context.globalCompositeOperation = 'source-over';
-                    saveCurrentFrame();
-                    renderCanvasContent();
-                    saveState(); 
+            if (isStylusOnlyModeEnabled && e.touches && e.touches.length > 0) {
+                const touchType = e.touches[0].touchType || 'direct';
+                if (touchType === 'direct') {
+                    isDrawing = false;
+                    return;
                 }
-                isDrawing = false; // Always reset drawing state
             }
+
+            if (tool === 'pan' && isPanning) {
+                const dx = clientX - lastPanPoint.x;
+                const dy = clientY - lastPanPoint.y;
+                panOffset.x += dx;
+                panOffset.y += dy;
+                lastPanPoint = { x: clientX, y: clientY };
+                renderCanvasContent();
+                return;
+            }
+
+            if (!isDrawing) return;
+
+            const { x, y } = getTransformedCoords(clientX, clientY);
+            drawingBufferContext.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
+            drawingBufferContext.lineTo(x, y);
+            drawingBufferContext.stroke();
+            renderCanvasContent(); // Rerender main canvas to show live drawing
         }
 
-        function floodFill(startX, startY, fillColor) {
-            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        function stopDrawing(e) {
+            e.preventDefault();
+
+            if (tool !== 'fill' && tool !== 'eyedropper' && tool !== 'pan') {
+                if (isDrawing) {
+                    drawingBufferContext.closePath();
+                    drawingBufferContext.globalCompositeOperation = 'source-over';
+                    saveCurrentFrame();
+                    saveState();
+                }
+            }
+            isDrawing = false;
+            isPanning = false;
+            renderCanvasContent();
+        }
+
+        function floodFill(startX, startY, fillColor, ctx, width, height) {
+            const imageData = ctx.getImageData(0, 0, width, height);
             const pixels = imageData.data;
-            const width = canvas.width;
-            const height = canvas.height;
 
             const getPixelColor = (x, y) => {
+                if (x < 0 || x >= width || y < 0 || y >= height) return [-1, -1, -1, -1];
                 const index = (y * width + x) * 4;
                 return [pixels[index], pixels[index + 1], pixels[index + 2], pixels[index + 3]];
             };
@@ -607,16 +721,16 @@
                 pixels[index + 3] = color[3];
             };
 
-            const startColor = getPixelColor(startX, startY);
+            const startColor = getPixelColor(Math.floor(startX), Math.floor(startY));
 
-            if (startColor[0] === fillColor[0] &&
+            if (startColor[0] === -1 || (startColor[0] === fillColor[0] &&
                 startColor[1] === fillColor[1] &&
                 startColor[2] === fillColor[2] &&
-                startColor[3] === fillColor[3]) {
+                startColor[3] === fillColor[3])) {
                 return;
             }
 
-            const pixelStack = [[startX, startY]];
+            const pixelStack = [[Math.floor(startX), Math.floor(startY)]];
             const visited = new Set();
 
             const matchColor = (color1, color2, tolerance = 5) => {
@@ -642,7 +756,7 @@
                     pixelStack.push([x, y - 1]);
                 }
             }
-            context.putImageData(imageData, 0, 0);
+            ctx.putImageData(imageData, 0, 0);
         }
 
         function updateTimeline() {
@@ -659,7 +773,7 @@
                 button.onclick = () => {
                     if (isPlaying) pauseAnimation();
                     currentFrameIndex = index;
-                    renderCanvasContent();
+                    loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load into buffer then render
                     updateTimeline();
                 };
                 timelineDiv.appendChild(button);
@@ -669,59 +783,53 @@
         function addFrame() {
             saveCurrentFrame();
 
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.fillStyle = '#ffffff';
-            context.fillRect(0, 0, canvas.width, canvas.height);
-            const blankCanvasData = canvas.toDataURL('image/png');
+            drawingBufferContext.clearRect(0, 0, drawingBufferCanvas.width, drawingBufferCanvas.height);
+            drawingBufferContext.fillStyle = '#ffffff';
+            drawingBufferContext.fillRect(0, 0, drawingBufferCanvas.width, drawingBufferCanvas.height);
+            const blankCanvasData = drawingBufferCanvas.toDataURL('image/png');
 
             frames.splice(currentFrameIndex + 1, 0, blankCanvasData);
             currentFrameIndex++;
-            renderCanvasContent();
+            loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load into buffer then render
             updateTimeline();
-            saveState(); 
-            showMessage('New frame added!');
+            saveState();
         }
 
         function deleteFrame() {
             if (frames.length <= 1) {
-                showMessage('Cannot delete the last frame!');
                 return;
             }
             frames.splice(currentFrameIndex, 1);
             if (currentFrameIndex >= frames.length) {
                 currentFrameIndex = frames.length - 1;
             }
-            renderCanvasContent();
+            loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load into buffer then render
             updateTimeline();
-            saveState(); 
-            showMessage('Frame deleted!');
+            saveState();
         }
 
         function duplicateFrame() {
             const currentFrameData = frames[currentFrameIndex];
             frames.splice(currentFrameIndex + 1, 0, currentFrameData);
             currentFrameIndex++;
-            renderCanvasContent();
+            loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load into buffer then render
             updateTimeline();
-            saveState(); 
-            showMessage('Frame duplicated!');
+            saveState();
         }
 
         function clearCurrentFrame() {
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.fillStyle = '#ffffff';
-            context.fillRect(0, 0, canvas.width, canvas.height);
+            drawingBufferContext.clearRect(0, 0, drawingBufferCanvas.width, drawingBufferCanvas.height);
+            drawingBufferContext.fillStyle = '#ffffff';
+            drawingBufferContext.fillRect(0, 0, drawingBufferCanvas.width, drawingBufferCanvas.height);
             saveCurrentFrame();
-            renderCanvasContent();
-            saveState(); 
-            showMessage('Current frame cleared!');
+            loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load into buffer then render
+            saveState();
         }
 
         function saveProject() {
             saveCurrentFrame();
             localStorage.setItem('animationProject', JSON.stringify(frames));
             localStorage.setItem('currentFrameIndex', currentFrameIndex.toString());
-            showMessage('Animation project saved!');
         }
 
         function loadProject() {
@@ -729,7 +837,6 @@
             const savedIndex = localStorage.getItem('currentFrameIndex');
 
             if (!savedProject) {
-                showMessage('No saved animation project found!');
                 return;
             }
 
@@ -738,40 +845,36 @@
                 if (loadedFrames && Array.isArray(loadedFrames) && loadedFrames.length > 0) {
                     frames = loadedFrames;
                     currentFrameIndex = Math.min(parseInt(savedIndex, 10) || 0, frames.length - 1);
-                    renderCanvasContent();
-                    updateTimeline();
-                    
                     history = [];
                     historyPointer = -1;
                     saveState();
-                    showMessage('Animation project loaded!');
+                    loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load into buffer then render
+                    updateTimeline();
                 } else {
-                    showMessage('Saved project data is corrupt or empty.');
+                    console.error('Saved project data is corrupt or empty.');
                 }
             } catch (error) {
                 console.error("Error parsing loaded project:", error);
-                showMessage('Error loading project data.');
             }
         }
 
         function playAnimation() {
             if (frames.length === 0) {
-                showMessage('No frames to play!');
                 return;
             }
             if (isPlaying) return;
 
             isPlaying = true;
             
-            renderCanvasContent();
+            // No need to load into buffer here, it's handled by interval and updateTimeline
+            renderCanvasContent(); 
 
             const interval = 1000 / animationSpeed;
             animationInterval = setInterval(() => {
                 currentFrameIndex = (currentFrameIndex + 1) % frames.length;
-                renderCanvasContent();
+                loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load into buffer then render
                 updateTimeline();
             }, interval);
-            showMessage('Playing animation...');
             playBtn.disabled = true;
             pauseBtn.disabled = false;
             stopBtn.disabled = false;
@@ -783,7 +886,6 @@
                 animationInterval = null;
             }
             isPlaying = false;
-            showMessage('Animation paused.');
             playBtn.disabled = false;
             pauseBtn.disabled = true;
         }
@@ -791,9 +893,8 @@
         function stopAnimation() {
             pauseAnimation();
             currentFrameIndex = 0;
-            renderCanvasContent();
+            loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load into buffer then render
             updateTimeline();
-            showMessage('Animation stopped.');
             playBtn.disabled = false;
             pauseBtn.disabled = true;
             stopBtn.disabled = true;
@@ -801,27 +902,24 @@
 
         function exportGif() {
             if (typeof GIF === 'undefined') {
-                showMessage('GIF.js library not loaded. Cannot export GIF.');
                 console.error('GIF.js is not available. Ensure the script is loaded.');
                 return;
             }
             if (frames.length === 0) {
-                showMessage('No frames to export!');
                 return;
             }
 
             isExporting = true;
             exportProgress = 0;
-            exportGifBtn.textContent = `Exporting GIF... ${exportProgress}%`;
+            exportGifBtn.textContent = `Exporting GIF... 0%`;
             exportGifBtn.disabled = true;
-            showMessage('Generating GIF...');
 
             const gif = new GIF({
                 workers: 2,
                 quality: 10,
                 delay: 1000 / animationSpeed,
-                width: canvas.width,
-                height: canvas.height,
+                width: drawingBufferCanvas.width,
+                height: drawingBufferCanvas.height,
                 background: '#ffffff',
                 transparent: '#ffffff'
             });
@@ -851,7 +949,6 @@
                 exportProgress = 0;
                 exportGifBtn.textContent = '🖼️ Export GIF';
                 exportGifBtn.disabled = false;
-                showMessage('GIF exported successfully!');
             });
 
             gif.on('error', function(error) {
@@ -860,7 +957,6 @@
                 exportProgress = 0;
                 exportGifBtn.textContent = '🖼️ Export GIF';
                 exportGifBtn.disabled = false;
-                showMessage('Error exporting GIF.');
             });
 
             gif.render();
@@ -869,7 +965,6 @@
         async function generateFrameIdea() {
             const prompt = ideaPromptInput.value.trim();
             if (!prompt) {
-                showMessage('Please enter a prompt for the idea generator.');
                 return;
             }
 
@@ -883,7 +978,7 @@
                 let chatHistory = [];
                 chatHistory.push({ role: "user", parts: [{ text: `Generate a creative drawing idea for an animation frame based on this prompt: "${prompt}". Keep it concise and focused on visual elements."` }] });
                 const payload = { contents: chatHistory };
-                const apiKey = ""; 
+                const apiKey = "";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
                 const response = await fetch(apiUrl, {
@@ -900,17 +995,14 @@
                     const text = result.candidates[0].content.parts[0].text;
                     ideaText.textContent = text;
                     generatedIdeaOutput.classList.remove('hidden');
-                    showMessage('Idea generated successfully!');
                 } else {
                     ideaText.textContent = 'Could not generate an idea. Please try again.';
                     generatedIdeaOutput.classList.remove('hidden');
-                    showMessage('Error generating idea.');
                 }
             } catch (error) {
                 console.error('Error calling Gemini API:', error);
                 ideaText.textContent = 'Failed to generate an idea due to an error.';
                 generatedIdeaOutput.classList.remove('hidden');
-                showMessage('Error generating idea.');
             } finally {
                 getIdeaBtn.disabled = false;
                 ideaPromptInput.disabled = false;
@@ -918,98 +1010,113 @@
             }
         }
 
-        window.onload = function() {
+        // Removed handleZoom function
+
+        // Removed resetZoomPan function
+
+        function updateToolButtons() {
+            const allTools = [brushToolBtn, eraserToolBtn, fillToolBtn, eyedropperToolBtn, panToolBtn];
+            allTools.forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
+                btn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
+            });
+
+            const currentToolBtn = document.getElementById(`${tool}Tool`);
+            if (currentToolBtn) {
+                currentToolBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
+                currentToolBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
+            }
+        }
+
+        window.onload = async function() { // Made onload async to await loadFrameIntoBuffer
+            // Set visible canvas dimensions based on its container
             canvas.width = canvas.offsetWidth;
             canvas.height = canvas.offsetHeight;
 
-            context.lineCap = 'round';
-            context.lineJoin = 'round';
-            context.strokeStyle = brushColor;
-            context.lineWidth = brushSize;
+            // Set drawing buffer dimensions. Provide a fallback if offsetWidth/Height are 0.
+            // Use a reasonable default if the canvas is not yet laid out (e.g., 800x600)
+            drawingBufferCanvas.width = canvas.width > 0 ? canvas.width : 800;
+            drawingBufferCanvas.height = canvas.height > 0 ? canvas.height : 600;
 
-            frames.push(canvas.toDataURL('image/png'));
+            // Initialize drawing buffer context properties
+            drawingBufferContext.lineCap = 'round';
+            drawingBufferContext.lineJoin = 'round';
+            drawingBufferContext.strokeStyle = brushColor;
+            drawingBufferContext.lineWidth = brushSize;
+            
+            // Ensure the drawing buffer is initialized with a white background
+            drawingBufferContext.fillStyle = '#ffffff';
+            drawingBufferContext.fillRect(0, 0, drawingBufferCanvas.width, drawingBufferCanvas.height);
+
+
+            if (frames.length === 0) {
+                const initialCanvasData = drawingBufferCanvas.toDataURL('image/png');
+                frames.push(initialCanvasData);
+                saveState();
+            }
+            
+            // Ensure the buffer has the current frame's content after initial setup or load
+            await loadFrameIntoBuffer(frames[currentFrameIndex]);
+            renderCanvasContent(); // Now render the content from the prepared buffer
+            
             updateTimeline();
-            renderCanvasContent();
-            saveState(); // Save initial blank frame to history
+            updateToolButtons();
+            updateUndoRedoButtons();
 
-            brushToolBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
-            brushToolBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-            eraserToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-            fillToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-
+            playBtn.disabled = false;
             pauseBtn.disabled = true;
             stopBtn.disabled = true;
             exportGifBtn.disabled = false;
 
             brushToolBtn.addEventListener('click', () => {
                 tool = 'brush';
-                brushToolBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
-                brushToolBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-                eraserToolBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
-                eraserToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-                fillToolBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
-                fillToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-                context.strokeStyle = brushColor;
+                updateToolButtons();
             });
             eraserToolBtn.addEventListener('click', () => {
                 tool = 'eraser';
-                eraserToolBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
-                eraserToolBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-                brushToolBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
-                brushToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-                fillToolBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
-                fillToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
+                updateToolButtons();
             });
             fillToolBtn.addEventListener('click', () => {
                 tool = 'fill';
-                fillToolBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
-                fillToolBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-                brushToolBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
-                brushToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-                eraserToolBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
-                eraserToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
+                updateToolButtons();
+            });
+            eyedropperToolBtn.addEventListener('click', () => {
+                tool = 'eyedropper';
+                updateToolButtons();
+            });
+            panToolBtn.addEventListener('click', () => {
+                tool = 'pan';
+                updateToolButtons();
             });
 
             stylusOnlyModeToggle.addEventListener('change', (e) => {
                 isStylusOnlyModeEnabled = e.target.checked;
-                if (isStylusOnlyModeEnabled) {
-                    showMessage('Palm Rejection Enabled (Stylus Only).');
-                } else {
-                    showMessage('Palm Rejection Disabled (All Touch Inputs).');
-                }
             });
 
-            // Event listener for the new Palm Rejection help icon
-            palmRejectionHelpIcon.addEventListener('click', () => {
-                palmRejectionHelpModal.classList.remove('hidden');
-            });
-            closePalmRejectionHelpModalBtn.addEventListener('click', () => {
-                palmRejectionHelpModal.classList.add('hidden');
-            });
-
+            // Removed zoomLevelInput and resetZoomPanBtn listeners
 
             brushColorInput.addEventListener('input', (e) => {
                 brushColor = e.target.value;
-                context.strokeStyle = brushColor;
+                drawingBufferContext.strokeStyle = brushColor;
             });
 
             brushSizeInput.addEventListener('input', (e) => {
                 brushSize = parseInt(e.target.value);
                 brushSizeValueSpan.textContent = `${brushSize}px`;
-                context.lineWidth = brushSize;
+                drawingBufferContext.lineWidth = brushSize;
             });
 
-            // Event listeners for mouse
             canvas.addEventListener('mousedown', startDrawing);
             canvas.addEventListener('mousemove', draw);
             canvas.addEventListener('mouseup', stopDrawing);
             canvas.addEventListener('mouseleave', stopDrawing);
 
-            // Event listeners for touch
             canvas.addEventListener('touchstart', startDrawing);
             canvas.addEventListener('touchmove', draw);
             canvas.addEventListener('touchend', stopDrawing);
-            canvas.addEventListener('touchcancel', stopDrawing); // Handle when touch is interrupted
+            canvas.addEventListener('touchcancel', stopDrawing);
+
+            // Removed wheel event listener for zoom: canvas.addEventListener('wheel', handleZoom, { passive: false });
 
             addFrameBtn.addEventListener('click', addFrame);
             deleteFrameBtn.addEventListener('click', deleteFrame);
@@ -1050,26 +1157,45 @@
                 helpModal.classList.add('hidden');
             });
 
+            palmRejectionHelpIcon.addEventListener('click', () => {
+                palmRejectionHelpModal.classList.remove('hidden');
+            });
+            closePalmRejectionHelpModalBtn.addEventListener('click', () => {
+                palmRejectionHelpModal.classList.add('hidden');
+            });
+
+            updatesBtn.addEventListener('click', () => {
+                updatesModal.classList.remove('hidden');
+            });
+            closeUpdatesModalBtn.addEventListener('click', () => {
+                updatesModal.classList.add('hidden');
+            });
+
             undoBtn.addEventListener('click', undo);
             redoBtn.addEventListener('click', redo);
 
+            // Removed onion skinning event listeners
+
             window.addEventListener('resize', () => {
-                const currentFrameData = canvas.toDataURL('image/png');
+                const currentFrameData = drawingBufferCanvas.toDataURL('image/png');
                 
                 canvas.width = canvas.offsetWidth;
                 canvas.height = canvas.offsetHeight;
 
-                const img = new Image();
-                img.src = currentFrameData;
-                img.onload = () => {
-                    context.clearRect(0, 0, canvas.width, canvas.height);
-                    context.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    context.lineCap = 'round';
-                    context.lineJoin = 'round';
-                    context.strokeStyle = brushColor;
-                    context.lineWidth = brushSize;
+                // Ensure drawingBufferCanvas also updates its size, with fallback
+                drawingBufferCanvas.width = canvas.width > 0 ? canvas.width : 800;
+                drawingBufferCanvas.height = canvas.height > 0 ? canvas.height : 600;
+
+                // Load the captured state back into the (now resized) drawing buffer
+                loadFrameIntoBuffer(currentFrameData).then(() => {
+                    // Reapply drawing settings to the buffer context (important after resize)
+                    drawingBufferContext.lineCap = 'round';
+                    drawingBufferContext.lineJoin = 'round';
+                    drawingBufferContext.strokeStyle = brushColor;
+                    drawingBufferContext.lineWidth = brushSize;
+                    
                     renderCanvasContent();
-                };
+                });
             });
         };
     </script>
