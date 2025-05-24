@@ -102,6 +102,34 @@
             border-radius: 0.25rem;
             box-shadow: inset 0 -1px 0 #a0aec0;
         }
+        /* Fixed message display */
+        #messageDisplay {
+            position: fixed;
+            top: 1rem; /* Adjust as needed */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000; /* Ensure it's on top of other content */
+            min-width: 250px;
+            text-align: center;
+        }
+        .help-icon {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 1.25rem; /* w-5 */
+            height: 1.25rem; /* h-5 */
+            border-radius: 9999px; /* rounded-full */
+            background-color: #9ca3af; /* gray-400 */
+            color: #ffffff; /* text-white */
+            font-size: 0.75rem; /* text-xs */
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 0.5rem; /* ml-2 */
+            transition: background-color 0.2s;
+        }
+        .help-icon:hover {
+            background-color: #6b7280; /* gray-500 */
+        }
     </style>
 </head>
 <body class="h-screen bg-gray-100 flex flex-col items-center p-4 sm:p-6 md:p-8">
@@ -121,6 +149,11 @@
                         <button id="brushTool" class="tool-button bg-blue-600 text-white shadow-md">✎</button>
                         <button id="eraserTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">🩹</button>
                         <button id="fillTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">🪣</button>
+                    </div>
+                    <div class="mt-4 flex items-center">
+                        <input type="checkbox" id="stylusOnlyModeToggle" class="mr-2 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                        <label for="stylusOnlyModeToggle" class="text-sm font-medium text-gray-700">Palm Rejection</label>
+                        <span id="palmRejectionHelpIcon" class="help-icon">?</span>
                     </div>
                 </div>
 
@@ -218,7 +251,7 @@
             <p class="text-gray-600 mb-4">
                 Describe what kind of idea you're looking for, e.g., "a character running through a forest," or "a magical creature appearing."
             </p>
-            <input type="text" id="ideaPromptInput" placeholder="Enter your prompt here..." class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:focus:ring-blue-500">
+            <input type="text" id="ideaPromptInput" placeholder="Enter your prompt here..." class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <button id="getIdeaBtn" class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200">
                 Get Idea
             </button>
@@ -262,6 +295,24 @@
         </div>
     </div>
 
+    <div id="palmRejectionHelpModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">🖐️ What is Palm Rejection?</h3>
+            <p class="text-gray-700 mb-4">
+                When "Palm Rejection" is enabled, the drawing canvas will **only respond to input from a digital pen or stylus**.
+            </p>
+            <p class="text-gray-700 mb-4">
+                Touches from your fingers or palm will be ignored, allowing you to rest your hand on the screen while drawing without making accidental marks.
+            </p>
+            <p class="text-gray-700 text-sm italic">
+                Note: This feature relies on your device and browser accurately reporting stylus input. Passive styluses (rubber-tip) may still be detected as finger touches.
+            </p>
+            <button id="closePalmRejectionHelpModalBtn" class="mt-6 w-full bg-gray-300 text-gray-800 px-4 py-3 rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-200">
+                Close
+            </button>
+        </div>
+    </div>
+
     <script>
         const canvas = document.getElementById('drawingCanvas');
         const context = canvas.getContext('2d');
@@ -273,6 +324,9 @@
         const brushColorInput = document.getElementById('brushColor');
         const brushSizeInput = document.getElementById('brushSize');
         const brushSizeValueSpan = document.getElementById('brushSizeValue');
+
+        const stylusOnlyModeToggle = document.getElementById('stylusOnlyModeToggle');
+        let isStylusOnlyModeEnabled = false;
 
         const addFrameBtn = document.getElementById('addFrame');
         const deleteFrameBtn = document.getElementById('deleteFrame');
@@ -306,6 +360,11 @@
         const undoBtn = document.getElementById('undoBtn');
         const redoBtn = document.getElementById('redoBtn');
 
+        // New Palm Rejection Help elements
+        const palmRejectionHelpIcon = document.getElementById('palmRejectionHelpIcon');
+        const palmRejectionHelpModal = document.getElementById('palmRejectionHelpModal');
+        const closePalmRejectionHelpModalBtn = document.getElementById('closePalmRejectionHelpModalBtn');
+
         let isDrawing = false;
         let brushColor = '#000000';
         let brushSize = 5;
@@ -327,14 +386,21 @@
         const MAX_HISTORY_STATES = 50; 
 
         function showMessage(msg) {
+            // Clear any existing timeout to prevent messages from overlapping or being cut short
+            if (messageDisplay._timeoutId) {
+                clearTimeout(messageDisplay._timeoutId);
+            }
             messageDisplay.textContent = msg;
-            messageDisplay.classList.remove('hidden');
+            messageDisplay.classList.remove('hidden', 'opacity-0');
             messageDisplay.classList.add('opacity-100');
-            setTimeout(() => {
+            
+            // Set a new timeout
+            messageDisplay._timeoutId = setTimeout(() => {
                 messageDisplay.classList.remove('opacity-100');
                 messageDisplay.classList.add('opacity-0');
-                setTimeout(() => messageDisplay.classList.add('hidden'), 500);
-            }, 2000);
+                // After fade out, hide the element completely
+                messageDisplay._timeoutId = setTimeout(() => messageDisplay.classList.add('hidden'), 500);
+            }, 2000); // Message visible for 2 seconds before fading out
         }
 
         function hexToRgba(hex) {
@@ -435,6 +501,17 @@
             const rect = canvas.getBoundingClientRect();
             let clientX, clientY;
 
+            // Handle Stylus Only Mode
+            if (isStylusOnlyModeEnabled && e.touches && e.touches.length > 0) {
+                const touchType = e.touches[0].touchType || 'direct'; // Default to 'direct' if touchType is not provided
+                if (touchType === 'direct') {
+                    // This is a finger or palm touch, ignore it
+                    showMessage('Palm Rejection: Finger/palm input ignored.');
+                    isDrawing = false; // Ensure drawing state is off
+                    return; 
+                }
+            }
+            
             if (e.touches && e.touches.length > 0) {
                 clientX = e.touches[0].clientX;
                 clientY = e.touches[0].clientY;
@@ -463,6 +540,16 @@
         function draw(e) {
             e.preventDefault(); // Prevent scrolling/zooming on touch devices
 
+            // Handle Stylus Only Mode for ongoing touch
+            if (isStylusOnlyModeEnabled && e.touches && e.touches.length > 0) {
+                const touchType = e.touches[0].touchType || 'direct';
+                if (touchType === 'direct') {
+                    // This is a finger or palm touch, ignore it
+                    isDrawing = false; // Stop drawing if it somehow started with finger/palm
+                    return;
+                }
+            }
+
             if (!isDrawing) return;
 
             const rect = canvas.getBoundingClientRect();
@@ -489,12 +576,15 @@
             e.preventDefault(); // Prevent default touch actions
 
             if (tool !== 'fill') {
-                context.closePath();
-                isDrawing = false;
-                context.globalCompositeOperation = 'source-over';
-                saveCurrentFrame();
-                renderCanvasContent();
-                saveState(); 
+                // If isDrawing is true here, it means we were drawing with a stylus
+                if (isDrawing) { 
+                    context.closePath();
+                    context.globalCompositeOperation = 'source-over';
+                    saveCurrentFrame();
+                    renderCanvasContent();
+                    saveState(); 
+                }
+                isDrawing = false; // Always reset drawing state
             }
         }
 
@@ -619,6 +709,8 @@
 
         function clearCurrentFrame() {
             context.clearRect(0, 0, canvas.width, canvas.height);
+            context.fillStyle = '#ffffff';
+            context.fillRect(0, 0, canvas.width, canvas.height);
             saveCurrentFrame();
             renderCanvasContent();
             saveState(); 
@@ -720,7 +812,7 @@
 
             isExporting = true;
             exportProgress = 0;
-            exportGifBtn.textContent = `Exporting GIF... 0%`;
+            exportGifBtn.textContent = `Exporting GIF... ${exportProgress}%`;
             exportGifBtn.disabled = true;
             showMessage('Generating GIF...');
 
@@ -877,6 +969,24 @@
                 eraserToolBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
                 eraserToolBtn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
             });
+
+            stylusOnlyModeToggle.addEventListener('change', (e) => {
+                isStylusOnlyModeEnabled = e.target.checked;
+                if (isStylusOnlyModeEnabled) {
+                    showMessage('Palm Rejection Enabled (Stylus Only).');
+                } else {
+                    showMessage('Palm Rejection Disabled (All Touch Inputs).');
+                }
+            });
+
+            // Event listener for the new Palm Rejection help icon
+            palmRejectionHelpIcon.addEventListener('click', () => {
+                palmRejectionHelpModal.classList.remove('hidden');
+            });
+            closePalmRejectionHelpModalBtn.addEventListener('click', () => {
+                palmRejectionHelpModal.classList.add('hidden');
+            });
+
 
             brushColorInput.addEventListener('input', (e) => {
                 brushColor = e.target.value;
