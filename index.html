@@ -125,7 +125,7 @@
 <body class="h-screen bg-gray-100 flex flex-col items-center p-4 sm:p-6 md:p-8">
 
     <h1 class="text-4xl sm:text-5xl font-extrabold text-blue-800 mb-4 text-center">
-        ToonStart Animation Editor <span class="text-xs font-normal align-top ml-2 text-gray-600">S.H. - S.S.<br>Im happy to announce this is the first ever browser animator the last time I checked</span>
+        ToonStart Animation Editor <span class="text-xs font-normal align-top ml-2 text-gray-600">S.H. - S.S.</span>
     </h1>
 
     <div id="messageDisplay" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md transition-opacity duration-500 opacity-0 z-1000 hidden"></div>
@@ -298,8 +298,8 @@
                 <li>
                     <span class="font-semibold">Canvas Pan:</span> Click and drag with the "✋ Hand" tool to pan.
                 </li>
-                  <li>
-                    <span class="font-semibold">Changing Canvas Size</span> When changing the canvas size <strong>try to change it before you start</strong>, In the case of changing it later all the settings will change to the default settings even when it displays something else <br> e.g. The font size is displayed as 5px but the brush is actually only 1px so make sure to check for that and rarely there's a chance it might break it.
+                <li>
+                    <span class="font-semibold">Line Smoothness:</span> If lines appear jagged or pixelated (especially at smaller brush sizes or high canvas resolutions), ensure your browser's "image smoothing" is enabled. This feature is enabled by default in ToonStart to improve line quality.
                 </li>
             </ul>
             <button id="closeHelpModalBtn" class="mt-6 w-full bg-gray-300 text-gray-800 px-4 py-3 rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-200">
@@ -330,6 +330,12 @@
         <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
             <h3 class="text-2xl font-bold text-gray-800 mb-4">✨ ToonStart Updates</h3>
             <div id="updatesContent" class="text-gray-700 space-y-4">
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700">May 26, 2025 - Improved Drawing Smoothness</h4>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><strong>Brush Shape & Diagonal Lines:</strong> Fixed issues where circular brush strokes would appear square or jagged, especially on diagonals or after canvas resizing. Image smoothing is now explicitly enabled for both drawing and display contexts to ensure smoother line rendering.</li>
+                    </ul>
+                </div>
                 <div>
                     <h4 class="font-semibold text-lg text-blue-700">May 30, 2025 - Added FAQ Button</h4>
                     <ul class="list-disc list-inside ml-4 text-sm">
@@ -690,21 +696,24 @@
 
             // Reverse the offset applied in renderCanvasContent (no scaling now)
             const aspectRatio = PROJECT_WIDTH / PROJECT_HEIGHT;
-            let drawWidth = canvas.width;
-            let drawHeight = canvas.width / aspectRatio;
+            let displayContentWidth = canvas.width;
+            let displayContentHeight = canvas.width / aspectRatio;
 
-            if (drawHeight > canvas.height) {
-                drawHeight = canvas.height;
-                drawWidth = canvas.height * aspectRatio;
+            if (displayContentHeight > canvas.height) {
+                displayContentHeight = canvas.height;
+                displayContentWidth = canvas.height * aspectRatio;
             }
 
-            const offsetX = (canvas.width - drawWidth) / 2;
-            const offsetY = (canvas.height - drawHeight) / 2;
+            const displayOffsetX = (canvas.width - displayContentWidth) / 2;
+            const displayOffsetY = (canvas.height - displayContentHeight) / 2;
 
-            // Map click from display canvas coords back to drawing buffer coords
-            // Account for panOffset first, then the internal centering offset
-            const x = ((canvasX - panOffset.x - offsetX) * (PROJECT_WIDTH / drawWidth));
-            const y = ((canvasY - panOffset.y - offsetY) * (PROJECT_HEIGHT / drawHeight));
+            // Apply pan offset first, then subtract the content's offset on the display canvas
+            const transformedX = (canvasX - panOffset.x - displayOffsetX);
+            const transformedY = (canvasY - panOffset.y - displayOffsetY);
+
+            // Scale these coordinates from the display content area back to the project's internal resolution
+            const x = transformedX * (PROJECT_WIDTH / displayContentWidth);
+            const y = transformedY * (PROJECT_HEIGHT / displayContentHeight);
 
             return { x, y };
         }
@@ -764,6 +773,12 @@
                 });
                 return;
             }
+
+            // Set drawing properties explicitly before starting a path
+            drawingBufferContext.lineCap = 'round';
+            drawingBufferContext.lineJoin = 'round';
+            drawingBufferContext.strokeStyle = brushColor;
+            drawingBufferContext.lineWidth = brushSize;
 
             const { x, y } = getTransformedCoords(clientX, clientY);
             drawingBufferContext.beginPath();
@@ -1142,7 +1157,7 @@
                 let chatHistory = [];
                 chatHistory.push({ role: "user", parts: [{ text: `Generate a creative drawing idea for an animation frame based on this prompt: "${prompt}". Keep it concise and focused on visual elements."` }] });
                 const payload = { contents: chatHistory };
-                const apiKey = "";
+                const apiKey = ""; // Replace with your actual Gemini API Key
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
                 const response = await fetch(apiUrl, {
@@ -1212,14 +1227,18 @@
             // Temporarily set drawing buffer to new dimensions
             drawingBufferCanvas.width = newWidth;
             drawingBufferCanvas.height = newHeight;
+            // Ensure smoothing is enabled after resize
+            drawingBufferContext.imageSmoothingEnabled = true;
 
             // Iterate through old frames, draw them onto the new buffer without scaling the content
-            for (const frameData of oldFrames) {
+            for (let i = 0; i < oldFrames.length; i++) {
+                const frameData = oldFrames[i];
                 // Create a temporary canvas for processing each frame
                 const tempFrameCanvas = document.createElement('canvas');
                 const tempFrameContext = tempFrameCanvas.getContext('2d');
                 tempFrameCanvas.width = newWidth;
                 tempFrameCanvas.height = newHeight;
+                tempFrameContext.imageSmoothingEnabled = true; // Ensure smoothing for temp context
 
                 // Fill with white background for the new frame
                 tempFrameContext.fillStyle = '#ffffff';
@@ -1264,6 +1283,10 @@
             // Set drawing buffer dimensions to fixed project size
             drawingBufferCanvas.width = PROJECT_WIDTH;
             drawingBufferCanvas.height = PROJECT_HEIGHT;
+
+            // Explicitly enable image smoothing for both contexts
+            context.imageSmoothingEnabled = true;
+            drawingBufferContext.imageSmoothingEnabled = true;
 
             // Initialize drawing buffer context properties
             drawingBufferContext.lineCap = 'round';
@@ -1436,10 +1459,11 @@
                 canvas.width = canvas.offsetWidth;
                 canvas.height = canvas.offsetHeight;
 
-                // drawingBufferCanvas dimensions remain fixed (PROJECT_WIDTH, PROJECT_HEIGHT)
-                // No need to update drawingBufferCanvas.width/height here as they are fixed.
+                // Ensure smoothing is enabled after resize on display canvas
+                context.imageSmoothingEnabled = true;
 
                 loadFrameIntoBuffer(currentFrameData).then(() => {
+                    // These properties are set in startDrawing now, but good to have fallback
                     drawingBufferContext.lineCap = 'round';
                     drawingBufferContext.lineJoin = 'round';
                     drawingBufferContext.strokeStyle = brushColor;
