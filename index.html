@@ -19,9 +19,9 @@
             border: 2px solid #e2e8f0;
             border-radius: 0.75rem;
             box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
-            width: 100%;
-            height: 100%;
-            touch-action: none;
+            width: 100%; /* Display canvas fills its container */
+            height: 100%; /* Display canvas fills its container */
+            touch-action: none; /* Disable default touch actions like pinch-zoom */
         }
         .flex-grow-container {
             flex-grow: 1;
@@ -128,6 +128,8 @@
         ToonStart Animation Editor <span class="text-xs font-normal align-top ml-2 text-gray-600">S.H. - S.S.</span>
     </h1>
 
+    <div id="messageDisplay" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md transition-opacity duration-500 opacity-0 z-1000 hidden"></div>
+
     <div class="flex w-full max-w-6xl bg-white rounded-xl shadow-lg overflow-hidden flex-grow flex-grow-container">
         <div id="staticToolbox">
             <div class="flex flex-col space-y-4">
@@ -157,15 +159,6 @@
                     <input type="range" id="brushSize" min="1" max="50" value="5" class="bg-gray-300 rounded-lg appearance-none cursor-pointer">
                 </div>
 
-                <!-- <div class="toolbox-section">
-                    <h2>Zoom & Pan</h2>
-                    <div class="flex flex-col space-y-1">
-                        <label for="zoomLevel">Zoom: <span id="zoomLevelValue" class="font-bold">100%</span></label>
-                        <input type="range" id="zoomLevel" min="10" max="500" value="100" class="bg-gray-300 rounded-lg appearance-none cursor-pointer">
-                        <button id="resetZoomPanBtn" class="bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-400 text-sm">Reset Zoom/Pan</button>
-                    </div>
-                </div> -->
-
                 <div class="toolbox-section">
                     <h2>Frames</h2>
                     <div class="flex flex-col space-y-1">
@@ -184,28 +177,6 @@
                     </div>
                 </div>
 
-                <!-- <div class="toolbox-section">
-                    <h2>Onion Skinning</h2>
-                    <div class="flex items-center mb-2">
-                        <input type="checkbox" id="onionSkinToggle" class="mr-2 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
-                        <label for="onionSkinToggle" class="text-sm font-medium text-gray-700">Enable Onion Skin</label>
-                    </div>
-                    <div id="onionSkinControls" class="space-y-2 hidden">
-                        <div>
-                            <label for="onionSkinPrevCount" class="block text-sm font-medium text-gray-700">Previous Frames: <span id="onionSkinPrevCountValue" class="font-bold">1</span></label>
-                            <input type="range" id="onionSkinPrevCount" min="0" max="5" value="1" class="w-full bg-gray-300 rounded-lg appearance-none cursor-pointer">
-                        </div>
-                        <div>
-                            <label for="onionSkinNextCount" class="block text-sm font-medium text-gray-700">Next Frames: <span id="onionSkinNextCountValue" class="font-bold">1</span></label>
-                            <input type="range" id="onionSkinNextCount" min="0" max="5" value="1" class="w-full bg-gray-300 rounded-lg appearance-none cursor-pointer">
-                        </div>
-                        <div>
-                            <label for="onionSkinOpacity" class="block text-sm font-medium text-gray-700">Opacity: <span id="onionSkinOpacityValue" class="font-bold">30%</span></label>
-                            <input type="range" id="onionSkinOpacity" min="0.1" max="1.0" step="0.05" value="0.3" class="w-full bg-gray-300 rounded-lg appearance-none cursor-pointer">
-                        </div>
-                    </div>
-                </div> -->
-
                 <div class="toolbox-section">
                     <h2>Project</h2>
                     <div class="flex flex-col space-y-1">
@@ -213,6 +184,9 @@
                         <button id="loadProject" class="bg-purple-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-purple-600 text-sm">Load</button>
                         <button id="exportGif" class="bg-teal-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-teal-600 text-sm">
                             🖼️ Export GIF
+                        </button>
+                        <button id="customizeBtn" class="bg-gray-400 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-500 text-sm w-full">
+                            ⚙️ Customize
                         </button>
                     </div>
                 </div>
@@ -229,6 +203,9 @@
                     <div class="flex flex-col space-y-1">
                         <button id="helpBtn" class="bg-gray-400 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-500 text-sm w-full">
                             ❓ Help
+                        </button>
+                        <button id="faqBtn" class="bg-gray-400 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-500 text-sm w-full">
+                            ❓ FAQ
                         </button>
                         <button id="updatesBtn" class="bg-gray-400 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-500 text-sm w-full">
                             ✨ Updates
@@ -263,10 +240,11 @@
                 </div>
             </div>
 
-            <div class="mt-6 p-4 bg-gray-100 rounded-lg shadow-inner overflow-x-auto">
-                <h3 class="text-lg font-semibold text-gray-700 mb-3">Timeline</h3>
-                <div id="timeline" class="flex space-x-2 pb-2">
+            <div class="mt-6 p-4 bg-gray-100 rounded-lg shadow-inner max-h-24">
+                <div id="timelineContainer" class="overflow-x-auto pb-2">
+                    <div id="timeline" class="flex flex-nowrap space-x-2 items-center">
                     </div>
+                </div>
             </div>
         </div>
     </div>
@@ -297,7 +275,7 @@
         <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
             <h3 class="2xl font-bold text-gray-800 mb-4">❓ Help & View Tips</h3>
             <p class="zoom-info mb-4">
-                If parts of the editor content appear cut off or you want to see more, you can adjust your browser's zoom level:
+                If parts of the editor content appear cut off or you want to see more, you can adjust your browser's zoom level.
             </p>
             <ul class="zoom-info list-disc list-inside space-y-2">
                 <li>
@@ -313,6 +291,9 @@
                     <kbd>Cmd</kbd> + <kbd>0</kbd> (Mac)
                     <br>
                     <kbd>Ctrl</kbd> + <kbd>0</kbd> (Windows)
+                </li>
+                <li>
+                    <span class="font-semibold">If browser zooming in and out doesn't work as expected, try setting your browser zoom to 150% and then refresh the page. This can sometimes resolve layout issues and bring the timeline back into view.</span>
                 </li>
                 <li>
                     <span class="font-semibold">Canvas Pan:</span> Click and drag with the "✋ Hand" tool to pan.
@@ -347,9 +328,57 @@
             <h3 class="text-2xl font-bold text-gray-800 mb-4">✨ ToonStart Updates</h3>
             <div id="updatesContent" class="text-gray-700 space-y-4">
                 <div>
-                    <h4 class="font-semibold text-lg text-blue-700">May 24, 2025 - Core Drawing Improvements</h4>
+                    <h4 class="font-semibold text-lg text-blue-700">May 30, 2025 - Added FAQ Button</h4>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><strong>FAQ Button:</strong> Added a new "FAQ" button in the "Info" section linking to the help page.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700">May 30, 2025 - Fixed Canvas Resizing</h4>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><strong>Fixed Canvas Resizing:</strong> Lines and existing drawings now maintain their original thickness when resizing the project canvas.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700">May 30, 2025 - Zoom Feature Removed</h4>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><strong>Zoom Feature Removed:</strong> Zoom functionality has been removed as per user request.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700">May 29, 2025 - Zoom Feature & UI Polish</h4>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><strong>Zoom Feature:</strong> Added zoom functionality via scroll wheel and a dedicated slider in the new "Zoom & Pan" section.</li>
+                        <li><strong>"Zoom & Pan" Section:</strong> New toolbox section for zoom and pan controls.</li>
+                        <li><strong>Timeline Text Removed:</strong> "Timeline" heading removed as requested.</li>
+                        <li><strong>Help Text Updated:</strong> Included instructions for the new zoom feature.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700">May 28, 2025 - Canvas Resizing & UI Refinements</h4>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><strong>Canvas Resizing:</strong> Added ability to change project width and height in Customize modal. Existing frames scale proportionally.</li>
+                        <li><strong>Customize Button Relocated:</strong> Moved to the "Project" section for better organization.</li>
+                        <li><strong>Onion Skinning Removed:</strong> Feature removed as per user request.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700">May 27, 2025 - Layout & Drawing Stability</h4>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><strong>Fixed Brush Offset:</strong> Drawing now consistently aligns with cursor regardless of timeline changes.</li>
+                        <li><strong>Timeline Horizontal Scroll:</strong> Timeline now scrolls horizontally when many frames are added, preventing vertical layout shifts.</li>
+                        <li><strong>Improved GIF Export:</strong> More reliable GIF generation due to consistent internal canvas dimensions.</li>
+                        <li>**Help Text Updated:** Added a new tip regarding browser zoom and refreshing.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700">May 25, 2025 - Critical Bug Fixes & Improvements</h4>
                     <ul class="list-disc list-inside ml-4 text-sm">
                         <li><strong>Fixed Drawing:</strong> Drawing tools now work correctly and responsively.</li>
+                        <li><strong>Fixed Undo/Redo:</strong> History system is fully functional.</li>
+                        <li><strong>Fixed Generate Idea:</strong> AI idea generator now works as expected.</li>
+                        <li><strong>Fixed Updates Button:</strong> The updates modal now opens correctly.</li>
+                        <li><strong>Restored Message Display:</strong> Temporary on-screen messages are back for user feedback.</li>
                         <li><strong>Fixed Fill Tool:</strong> Now accurately fills areas regardless of pan.</li>
                         <li><strong>Fixed Eyedropper Tool:</strong> Accurately picks colors from the canvas.</li>
                         <li>**Enhanced Responsiveness:** Significant performance improvements for drawing and canvas interactions.</li>
@@ -384,6 +413,33 @@
         </div>
     </div>
 
+    <div id="customizeModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">⚙️ Customize Editor</h3>
+            <div class="space-y-4">
+                <div>
+                    <label for="projectWidth" class="block text-sm font-medium text-gray-700">Project Width (px):</label>
+                    <input type="number" id="projectWidth" min="100" max="2000" value="800"
+                           class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="projectHeight" class="block text-sm font-medium text-gray-700">Project Height (px):</label>
+                    <input type="number" id="projectHeight" min="100" max="1500" value="600"
+                           class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button id="applyCanvasSizeBtn" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200">
+                    Apply Canvas Size
+                </button>
+                <button id="resetCanvasSizeBtn" class="w-full bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-200">
+                    Reset to Default (800x600)
+                </button>
+            </div>
+            <button id="closeCustomizeModalBtn" class="mt-6 w-full bg-gray-300 text-gray-800 px-4 py-3 rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-200">
+                Close
+            </button>
+        </div>
+    </div>
+
 
     <script>
         const canvas = document.getElementById('drawingCanvas');
@@ -391,6 +447,12 @@
 
         const drawingBufferCanvas = document.createElement('canvas');
         const drawingBufferContext = drawingBufferCanvas.getContext('2d');
+
+        // Define a fixed internal resolution for the drawing buffer
+        let PROJECT_WIDTH = 800;
+        let PROJECT_HEIGHT = 600;
+
+        const messageDisplay = document.getElementById('messageDisplay');
 
         const brushToolBtn = document.getElementById('brushTool');
         const eraserToolBtn = document.getElementById('eraserTool');
@@ -403,8 +465,6 @@
 
         const stylusOnlyModeToggle = document.getElementById('stylusOnlyModeToggle');
         let isStylusOnlyModeEnabled = false;
-
-        // Removed zoom-related elements: zoomLevelInput, zoomLevelValueSpan, resetZoomPanBtn
 
         const addFrameBtn = document.getElementById('addFrame');
         const deleteFrameBtn = document.getElementById('deleteFrame');
@@ -421,7 +481,8 @@
         const animationSpeedInput = document.getElementById('animationSpeed');
         const animationSpeedValueSpan = document.getElementById('animationSpeedValue');
 
-        const timelineDiv = document.getElementById('timeline');
+        const timelineDiv = document.getElementById('timeline'); // The flex container for frame buttons
+        const timelineContainer = document.getElementById('timelineContainer'); // The scrolling container
 
         const generateIdeaBtn = document.getElementById('generateIdeaBtn');
         const ideaModal = document.getElementById('ideaModal');
@@ -431,9 +492,14 @@
         const ideaText = document.getElementById('ideaText');
         const closeIdeaModalBtn = document.getElementById('closeIdeaModalBtn');
 
-        const helpBtn = document.getElementById('helpBtn'); // Corrected assignment
+        const helpBtn = document.getElementById('helpBtn'); 
         const helpModal = document.getElementById('helpModal');
         const closeHelpModalBtn = document.getElementById('closeHelpModalBtn');
+
+        const faqBtn = document.getElementById('faqBtn'); // New FAQ button
+        const updatesBtn = document.getElementById('updatesBtn');
+        const updatesModal = document.getElementById('updatesModal');
+        const closeUpdatesModalBtn = document.getElementById('closeUpdatesModalBtn');
 
         const undoBtn = document.getElementById('undoBtn');
         const redoBtn = document.getElementById('redoBtn');
@@ -442,11 +508,13 @@
         const palmRejectionHelpModal = document.getElementById('palmRejectionHelpModal');
         const closePalmRejectionHelpModalBtn = document.getElementById('closePalmRejectionHelpModalBtn');
 
-        const updatesBtn = document.getElementById('updatesBtn');
-        const updatesModal = document.getElementById('updatesModal');
-        const closeUpdatesModalBtn = document.getElementById('closeUpdatesModalBtn');
-
-        // Removed onion skinning related elements
+        const customizeBtn = document.getElementById('customizeBtn');
+        const customizeModal = document.getElementById('customizeModal');
+        const closeCustomizeModalBtn = document.getElementById('closeCustomizeModalBtn');
+        const projectWidthInput = document.getElementById('projectWidth');
+        const projectHeightInput = document.getElementById('projectHeight');
+        const applyCanvasSizeBtn = document.getElementById('applyCanvasSizeBtn');
+        const resetCanvasSizeBtn = document.getElementById('resetCanvasSizeBtn');
 
         let isDrawing = false;
         let brushColor = '#000000';
@@ -467,12 +535,26 @@
         let historyPointer = -1;
         const MAX_HISTORY_STATES = 50;
 
-        // Removed scale variable
         let panOffset = { x: 0, y: 0 };
         let isPanning = false;
         let lastPanPoint = { x: 0, y: 0 };
-        
+
         const loadedImageCache = new Map();
+
+        function showMessage(msg) {
+            if (messageDisplay._timeoutId) {
+                clearTimeout(messageDisplay._timeoutId);
+            }
+            messageDisplay.textContent = msg;
+            messageDisplay.classList.remove('hidden', 'opacity-0');
+            messageDisplay.classList.add('opacity-100');
+            
+            messageDisplay._timeoutId = setTimeout(() => {
+                messageDisplay.classList.remove('opacity-100');
+                messageDisplay.classList.add('opacity-0');
+                messageDisplay._timeoutId = setTimeout(() => messageDisplay.classList.add('hidden'), 500);
+            }, 2000);
+        }
 
         function hexToRgba(hex) {
             const r = parseInt(hex.slice(1, 3), 16);
@@ -518,9 +600,10 @@
             if (historyPointer > 0) {
                 historyPointer--;
                 frames = JSON.parse(JSON.stringify(history[historyPointer]));
-                loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load into buffer then render
+                loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent);
                 updateTimeline();
                 updateUndoRedoButtons();
+                showMessage('Undo successful!');
             }
         }
 
@@ -528,9 +611,10 @@
             if (historyPointer < history.length - 1) {
                 historyPointer++;
                 frames = JSON.parse(JSON.stringify(history[historyPointer]));
-                loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load into buffer then render
+                loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent);
                 updateTimeline();
                 updateUndoRedoButtons();
+                showMessage('Redo successful!');
             }
         }
 
@@ -539,7 +623,6 @@
             redoBtn.disabled = !(historyPointer < history.length - 1);
         }
 
-        // New function to load frame data into the off-screen drawing buffer
         async function loadFrameIntoBuffer(frameData) {
             drawingBufferContext.clearRect(0, 0, drawingBufferCanvas.width, drawingBufferCanvas.height);
             drawingBufferContext.fillStyle = '#ffffff';
@@ -555,16 +638,38 @@
             }
         }
 
-        function renderCanvasContent() {
+        async function renderCanvasContent() {
             context.clearRect(0, 0, canvas.width, canvas.height);
             context.fillStyle = '#ffffff';
             context.fillRect(0, 0, canvas.width, canvas.height);
 
             context.save();
+            // Apply pan transforms (zoom is removed)
             context.translate(panOffset.x, panOffset.y);
             
-            // Draw the drawingBufferCanvas onto the main canvas
-            context.drawImage(drawingBufferCanvas, 0, 0, drawingBufferCanvas.width, drawingBufferCanvas.height);
+            const aspectRatio = PROJECT_WIDTH / PROJECT_HEIGHT;
+            let drawWidth = canvas.width;
+            let drawHeight = canvas.width / aspectRatio;
+
+            if (drawHeight > canvas.height) {
+                drawHeight = canvas.height;
+                drawWidth = canvas.height * aspectRatio;
+            }
+
+            const offsetX = (canvas.width - drawWidth) / 2;
+            const offsetY = (canvas.height - drawHeight) / 2;
+
+            // Draw current frame from buffer
+            context.globalAlpha = 1.0;
+            context.globalCompositeOperation = 'source-over';
+            context.drawImage(drawingBufferCanvas, offsetX, offsetY, drawWidth, drawHeight);
+
+            // Draw dashed border around the drawing area
+            context.strokeStyle = '#888888'; // Gray color for the border
+            context.lineWidth = 2; // Thickness of the border
+            context.setLineDash([5, 5]); // Dashed line pattern (5px line, 5px gap)
+            context.strokeRect(offsetX, offsetY, drawWidth, drawHeight);
+            context.setLineDash([]); // Reset line dash to solid for other drawings
 
             context.restore();
             context.globalAlpha = 1.0;
@@ -577,13 +682,27 @@
 
         function getTransformedCoords(clientX, clientY) {
             const rect = canvas.getBoundingClientRect();
-            // Get coordinates relative to the visible canvas
             const canvasX = clientX - rect.left;
             const canvasY = clientY - rect.top;
 
-            // Reverse pan transformation to get coordinates on the original resolution drawing buffer
-            const x = (canvasX - panOffset.x);
-            const y = (canvasY - panOffset.y);
+            // Reverse the offset applied in renderCanvasContent (no scaling now)
+            const aspectRatio = PROJECT_WIDTH / PROJECT_HEIGHT;
+            let drawWidth = canvas.width;
+            let drawHeight = canvas.width / aspectRatio;
+
+            if (drawHeight > canvas.height) {
+                drawHeight = canvas.height;
+                drawWidth = canvas.height * aspectRatio;
+            }
+
+            const offsetX = (canvas.width - drawWidth) / 2;
+            const offsetY = (canvas.height - drawHeight) / 2;
+
+            // Map click from display canvas coords back to drawing buffer coords
+            // Account for panOffset first, then the internal centering offset
+            const x = ((canvasX - panOffset.x - offsetX) * (PROJECT_WIDTH / drawWidth));
+            const y = ((canvasY - panOffset.y - offsetY) * (PROJECT_HEIGHT / drawHeight));
+
             return { x, y };
         }
 
@@ -612,13 +731,13 @@
                 const canvasX = clientX - rect.left;
                 const canvasY = clientY - rect.top;
                 
-                // Get pixel data from the *rendered* canvas at the exact screen coordinates
                 const imageData = context.getImageData(canvasX, canvasY, 1, 1).data;
                 brushColorInput.value = rgbaToHex(imageData[0], imageData[1], imageData[2]);
                 brushColor = brushColorInput.value;
-                drawingBufferContext.strokeStyle = brushColor; // Update buffer context
+                drawingBufferContext.strokeStyle = brushColor; // Update drawing buffer context
                 tool = 'brush';
                 updateToolButtons();
+                showMessage('Color picked!');
                 return;
             }
 
@@ -629,15 +748,16 @@
             }
 
             if (tool === 'fill') {
-                const { x, y } = getTransformedCoords(clientX, clientY);
-                
-                loadFrameIntoBuffer(frames[currentFrameIndex]).then(() => { // Ensure buffer is up-to-date
+                loadFrameIntoBuffer(frames[currentFrameIndex]).then(() => {
+                    const { x, y } = getTransformedCoords(clientX, clientY);
                     floodFill(x, y, hexToRgba(brushColor), drawingBufferContext, drawingBufferCanvas.width, drawingBufferCanvas.height);
                     frames[currentFrameIndex] = drawingBufferCanvas.toDataURL('image/png');
                     renderCanvasContent();
                     saveState();
+                    showMessage('Fill applied!');
                 }).catch(error => {
                     console.error("Error loading frame for fill:", error);
+                    showMessage('Error applying fill.');
                 });
                 return;
             }
@@ -684,7 +804,7 @@
             drawingBufferContext.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
             drawingBufferContext.lineTo(x, y);
             drawingBufferContext.stroke();
-            renderCanvasContent(); // Rerender main canvas to show live drawing
+            renderCanvasContent();
         }
 
         function stopDrawing(e) {
@@ -773,7 +893,7 @@
                 button.onclick = () => {
                     if (isPlaying) pauseAnimation();
                     currentFrameIndex = index;
-                    loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load into buffer then render
+                    loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent);
                     updateTimeline();
                 };
                 timelineDiv.appendChild(button);
@@ -790,31 +910,35 @@
 
             frames.splice(currentFrameIndex + 1, 0, blankCanvasData);
             currentFrameIndex++;
-            loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load into buffer then render
+            loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent);
             updateTimeline();
             saveState();
+            showMessage('New frame added!');
         }
 
         function deleteFrame() {
             if (frames.length <= 1) {
+                showMessage('Cannot delete the last frame!');
                 return;
             }
             frames.splice(currentFrameIndex, 1);
             if (currentFrameIndex >= frames.length) {
                 currentFrameIndex = frames.length - 1;
             }
-            loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load into buffer then render
+            loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent);
             updateTimeline();
             saveState();
+            showMessage('Frame deleted!');
         }
 
         function duplicateFrame() {
             const currentFrameData = frames[currentFrameIndex];
             frames.splice(currentFrameIndex + 1, 0, currentFrameData);
             currentFrameIndex++;
-            loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load into buffer then render
+            loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent);
             updateTimeline();
             saveState();
+            showMessage('Frame duplicated!');
         }
 
         function clearCurrentFrame() {
@@ -822,21 +946,29 @@
             drawingBufferContext.fillStyle = '#ffffff';
             drawingBufferContext.fillRect(0, 0, drawingBufferCanvas.width, drawingBufferCanvas.height);
             saveCurrentFrame();
-            loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load into buffer then render
+            loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent);
             saveState();
+            showMessage('Current frame cleared!');
         }
 
         function saveProject() {
             saveCurrentFrame();
             localStorage.setItem('animationProject', JSON.stringify(frames));
             localStorage.setItem('currentFrameIndex', currentFrameIndex.toString());
+            // Also save current project dimensions
+            localStorage.setItem('projectWidth', PROJECT_WIDTH.toString());
+            localStorage.setItem('projectHeight', PROJECT_HEIGHT.toString());
+            showMessage('Animation project saved!');
         }
 
         function loadProject() {
             const savedProject = localStorage.getItem('animationProject');
             const savedIndex = localStorage.getItem('currentFrameIndex');
+            const savedWidth = localStorage.getItem('projectWidth');
+            const savedHeight = localStorage.getItem('projectHeight');
 
             if (!savedProject) {
+                showMessage('No saved animation project found!');
                 return;
             }
 
@@ -845,39 +977,56 @@
                 if (loadedFrames && Array.isArray(loadedFrames) && loadedFrames.length > 0) {
                     frames = loadedFrames;
                     currentFrameIndex = Math.min(parseInt(savedIndex, 10) || 0, frames.length - 1);
+                    
+                    // Update project dimensions if saved
+                    const newWidth = parseInt(savedWidth, 10) || 800;
+                    const newHeight = parseInt(savedHeight, 10) || 600;
+                    
+                    if (newWidth !== PROJECT_WIDTH || newHeight !== PROJECT_HEIGHT) {
+                        PROJECT_WIDTH = newWidth;
+                        PROJECT_HEIGHT = newHeight;
+                        projectWidthInput.value = PROJECT_WIDTH;
+                        projectHeightInput.value = PROJECT_HEIGHT;
+                        // No need to call resizeDrawingBufferAndFrames here, as loadFrameIntoBuffer will handle it
+                        // based on the updated PROJECT_WIDTH and PROJECT_HEIGHT
+                    }
+                    
                     history = [];
                     historyPointer = -1;
                     saveState();
-                    loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load into buffer then render
+                    loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load and render after setting dimensions
                     updateTimeline();
+                    showMessage('Animation project loaded!');
                 } else {
-                    console.error('Saved project data is corrupt or empty.');
+                    showMessage('Saved project data is corrupt or empty.');
                 }
             } catch (error) {
                 console.error("Error parsing loaded project:", error);
+                showMessage('Error loading project data.');
             }
         }
 
         function playAnimation() {
             if (frames.length === 0) {
+                showMessage('No frames to play!');
                 return;
             }
             if (isPlaying) return;
 
             isPlaying = true;
             
-            // No need to load into buffer here, it's handled by interval and updateTimeline
             renderCanvasContent(); 
 
             const interval = 1000 / animationSpeed;
             animationInterval = setInterval(() => {
                 currentFrameIndex = (currentFrameIndex + 1) % frames.length;
-                loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load into buffer then render
+                loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent);
                 updateTimeline();
             }, interval);
             playBtn.disabled = true;
             pauseBtn.disabled = false;
             stopBtn.disabled = false;
+            showMessage('Playing animation...');
         }
 
         function pauseAnimation() {
@@ -888,24 +1037,28 @@
             isPlaying = false;
             playBtn.disabled = false;
             pauseBtn.disabled = true;
+            showMessage('Animation paused.');
         }
 
         function stopAnimation() {
             pauseAnimation();
             currentFrameIndex = 0;
-            loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load into buffer then render
+            loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent);
             updateTimeline();
             playBtn.disabled = false;
             pauseBtn.disabled = true;
             stopBtn.disabled = true;
+            showMessage('Animation stopped.');
         }
 
-        function exportGif() {
+        async function exportGif() {
             if (typeof GIF === 'undefined') {
+                showMessage('GIF.js library not loaded. Cannot export GIF.');
                 console.error('GIF.js is not available. Ensure the script is loaded.');
                 return;
             }
             if (frames.length === 0) {
+                showMessage('No frames to export!');
                 return;
             }
 
@@ -913,22 +1066,27 @@
             exportProgress = 0;
             exportGifBtn.textContent = `Exporting GIF... 0%`;
             exportGifBtn.disabled = true;
+            showMessage('Generating GIF...');
 
             const gif = new GIF({
                 workers: 2,
                 quality: 10,
                 delay: 1000 / animationSpeed,
-                width: drawingBufferCanvas.width,
-                height: drawingBufferCanvas.height,
+                width: drawingBufferCanvas.width, // Use fixed internal resolution
+                height: drawingBufferCanvas.height, // Use fixed internal resolution
                 background: '#ffffff',
                 transparent: '#ffffff'
             });
 
-            frames.forEach(frameData => {
-                const img = new Image();
-                img.src = frameData;
-                gif.addFrame(img, { delay: 1000 / animationSpeed });
-            });
+            for (let i = 0; i < frames.length; i++) {
+                try {
+                    const img = await loadImage(frames[i]);
+                    gif.addFrame(img, { delay: 1000 / animationSpeed });
+                }
+                catch (error) {
+                    console.error(`Error loading frame ${i} for GIF export:`, error);
+                }
+            }
 
             gif.on('progress', function(p) {
                 exportProgress = Math.floor(p * 100);
@@ -949,6 +1107,7 @@
                 exportProgress = 0;
                 exportGifBtn.textContent = '🖼️ Export GIF';
                 exportGifBtn.disabled = false;
+                showMessage('GIF exported successfully!');
             });
 
             gif.on('error', function(error) {
@@ -957,6 +1116,7 @@
                 exportProgress = 0;
                 exportGifBtn.textContent = '🖼️ Export GIF';
                 exportGifBtn.disabled = false;
+                showMessage('Error exporting GIF.');
             });
 
             gif.render();
@@ -965,6 +1125,7 @@
         async function generateFrameIdea() {
             const prompt = ideaPromptInput.value.trim();
             if (!prompt) {
+                showMessage('Please enter a prompt for the idea generator.');
                 return;
             }
 
@@ -995,24 +1156,23 @@
                     const text = result.candidates[0].content.parts[0].text;
                     ideaText.textContent = text;
                     generatedIdeaOutput.classList.remove('hidden');
+                    showMessage('Idea generated successfully!');
                 } else {
                     ideaText.textContent = 'Could not generate an idea. Please try again.';
                     generatedIdeaOutput.classList.remove('hidden');
+                    showMessage('Error generating idea.');
                 }
             } catch (error) {
                 console.error('Error calling Gemini API:', error);
                 ideaText.textContent = 'Failed to generate an idea due to an error.';
                 generatedIdeaOutput.classList.remove('hidden');
+                showMessage('Error generating idea.');
             } finally {
                 getIdeaBtn.disabled = false;
                 ideaPromptInput.disabled = false;
                 getIdeaBtn.textContent = 'Get Idea';
             }
         }
-
-        // Removed handleZoom function
-
-        // Removed resetZoomPan function
 
         function updateToolButtons() {
             const allTools = [brushToolBtn, eraserToolBtn, fillToolBtn, eyedropperToolBtn, panToolBtn];
@@ -1028,15 +1188,79 @@
             }
         }
 
-        window.onload = async function() { // Made onload async to await loadFrameIntoBuffer
-            // Set visible canvas dimensions based on its container
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
+        /**
+         * Resizes the internal drawing buffer and ensures existing frames are redrawn
+         * without scaling their content, maintaining original line thickness.
+         * @param {number} newWidth The new width for the project.
+         * @param {number} newHeight The new height for the project.
+         */
+        async function resizeDrawingBufferAndFrames(newWidth, newHeight) {
+            const oldFrames = [...frames]; // Copy current frames
+            const newFrames = [];
 
-            // Set drawing buffer dimensions. Provide a fallback if offsetWidth/Height are 0.
-            // Use a reasonable default if the canvas is not yet laid out (e.g., 800x600)
-            drawingBufferCanvas.width = canvas.width > 0 ? canvas.width : 800;
-            drawingBufferCanvas.height = canvas.height > 0 ? canvas.height : 600;
+            // Store old project dimensions to correctly draw existing content
+            const oldProjectWidth = PROJECT_WIDTH;
+            const oldProjectHeight = PROJECT_HEIGHT;
+
+            // Update global project dimensions
+            PROJECT_WIDTH = newWidth;
+            PROJECT_HEIGHT = newHeight;
+
+            // Temporarily set drawing buffer to new dimensions
+            drawingBufferCanvas.width = newWidth;
+            drawingBufferCanvas.height = newHeight;
+
+            // Iterate through old frames, draw them onto the new buffer without scaling the content
+            for (const frameData of oldFrames) {
+                // Create a temporary canvas for processing each frame
+                const tempFrameCanvas = document.createElement('canvas');
+                const tempFrameContext = tempFrameCanvas.getContext('2d');
+                tempFrameCanvas.width = newWidth;
+                tempFrameCanvas.height = newHeight;
+
+                // Fill with white background for the new frame
+                tempFrameContext.fillStyle = '#ffffff';
+                tempFrameContext.fillRect(0, 0, newWidth, newHeight);
+
+                if (frameData && frameData.startsWith('data:image/png;base64,')) {
+                    try {
+                        const img = await loadImage(frameData);
+                        // Calculate centering offsets for the OLD image onto the NEW canvas
+                        // This will keep the original drawing at its original pixel size
+                        const offsetX = (newWidth - oldProjectWidth) / 2;
+                        const offsetY = (newHeight - oldProjectHeight) / 2;
+
+                        // Draw the original image onto the new canvas at its original dimensions
+                        // It will be centered, and if the new canvas is smaller, it will be clipped.
+                        tempFrameContext.drawImage(img, offsetX, offsetY, oldProjectWidth, oldProjectHeight);
+                    } catch (error) {
+                        console.error("Error scaling frame during resize:", error);
+                        // If image fails, the frame remains white (already filled)
+                    }
+                }
+                newFrames.push(tempFrameCanvas.toDataURL('image/png'));
+            }
+            
+            frames = newFrames; // Update global frames array
+
+            // Ensure current frame is loaded into buffer and canvas is rendered
+            await loadFrameIntoBuffer(frames[currentFrameIndex]);
+            renderCanvasContent();
+            updateTimeline();
+            saveState(); // Save this new state to history
+            showMessage(`Canvas resized to ${newWidth}x${newHeight}!`);
+        }
+
+        window.onload = async function() {
+            // Initialize PROJECT_WIDTH and PROJECT_HEIGHT from localStorage or default
+            PROJECT_WIDTH = parseInt(localStorage.getItem('projectWidth')) || 800;
+            PROJECT_HEIGHT = parseInt(localStorage.getItem('projectHeight')) || 600;
+            projectWidthInput.value = PROJECT_WIDTH;
+            projectHeightInput.value = PROJECT_HEIGHT;
+
+            // Set drawing buffer dimensions to fixed project size
+            drawingBufferCanvas.width = PROJECT_WIDTH;
+            drawingBufferCanvas.height = PROJECT_HEIGHT;
 
             // Initialize drawing buffer context properties
             drawingBufferContext.lineCap = 'round';
@@ -1048,6 +1272,10 @@
             drawingBufferContext.fillStyle = '#ffffff';
             drawingBufferContext.fillRect(0, 0, drawingBufferCanvas.width, drawingBufferCanvas.height);
 
+            // Set visible canvas dimensions based on its container
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+
 
             if (frames.length === 0) {
                 const initialCanvasData = drawingBufferCanvas.toDataURL('image/png');
@@ -1055,9 +1283,8 @@
                 saveState();
             }
             
-            // Ensure the buffer has the current frame's content after initial setup or load
             await loadFrameIntoBuffer(frames[currentFrameIndex]);
-            renderCanvasContent(); // Now render the content from the prepared buffer
+            renderCanvasContent();
             
             updateTimeline();
             updateToolButtons();
@@ -1093,8 +1320,6 @@
                 isStylusOnlyModeEnabled = e.target.checked;
             });
 
-            // Removed zoomLevelInput and resetZoomPanBtn listeners
-
             brushColorInput.addEventListener('input', (e) => {
                 brushColor = e.target.value;
                 drawingBufferContext.strokeStyle = brushColor;
@@ -1115,8 +1340,6 @@
             canvas.addEventListener('touchmove', draw);
             canvas.addEventListener('touchend', stopDrawing);
             canvas.addEventListener('touchcancel', stopDrawing);
-
-            // Removed wheel event listener for zoom: canvas.addEventListener('wheel', handleZoom, { passive: false });
 
             addFrameBtn.addEventListener('click', addFrame);
             deleteFrameBtn.addEventListener('click', deleteFrame);
@@ -1157,6 +1380,11 @@
                 helpModal.classList.add('hidden');
             });
 
+            // New FAQ button event listener
+            faqBtn.addEventListener('click', () => {
+                window.open('https://sathvik-harish.github.io/ToonStart-Help/', '_blank');
+            });
+
             palmRejectionHelpIcon.addEventListener('click', () => {
                 palmRejectionHelpModal.classList.remove('hidden');
             });
@@ -1171,10 +1399,33 @@
                 updatesModal.classList.add('hidden');
             });
 
+            customizeBtn.addEventListener('click', () => {
+                customizeModal.classList.remove('hidden');
+            });
+            closeCustomizeModalBtn.addEventListener('click', () => {
+                customizeModal.classList.add('hidden');
+            });
+
+            applyCanvasSizeBtn.addEventListener('click', () => {
+                const newWidth = parseInt(projectWidthInput.value, 10);
+                const newHeight = parseInt(projectHeightInput.value, 10);
+                if (isNaN(newWidth) || newWidth < 100 || newWidth > 2000 || isNaN(newHeight) || newHeight < 100 || newHeight > 1500) {
+                    showMessage('Please enter valid dimensions (Width: 100-2000, Height: 100-1500).');
+                    return;
+                }
+                resizeDrawingBufferAndFrames(newWidth, newHeight);
+                showMessage(`Canvas size set to ${newWidth}x${newHeight}.`);
+            });
+
+            resetCanvasSizeBtn.addEventListener('click', () => {
+                projectWidthInput.value = 800;
+                projectHeightInput.value = 600;
+                resizeDrawingBufferAndFrames(800, 600);
+                showMessage('Canvas size reset to default (800x600).');
+            });
+
             undoBtn.addEventListener('click', undo);
             redoBtn.addEventListener('click', redo);
-
-            // Removed onion skinning event listeners
 
             window.addEventListener('resize', () => {
                 const currentFrameData = drawingBufferCanvas.toDataURL('image/png');
@@ -1182,13 +1433,10 @@
                 canvas.width = canvas.offsetWidth;
                 canvas.height = canvas.offsetHeight;
 
-                // Ensure drawingBufferCanvas also updates its size, with fallback
-                drawingBufferCanvas.width = canvas.width > 0 ? canvas.width : 800;
-                drawingBufferCanvas.height = canvas.height > 0 ? canvas.height : 600;
+                // drawingBufferCanvas dimensions remain fixed (PROJECT_WIDTH, PROJECT_HEIGHT)
+                // No need to update drawingBufferCanvas.width/height here as they are fixed.
 
-                // Load the captured state back into the (now resized) drawing buffer
                 loadFrameIntoBuffer(currentFrameData).then(() => {
-                    // Reapply drawing settings to the buffer context (important after resize)
                     drawingBufferContext.lineCap = 'round';
                     drawingBufferContext.lineJoin = 'round';
                     drawingBufferContext.strokeStyle = brushColor;
