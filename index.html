@@ -8,71 +8,83 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/gif.js@0.2.0/dist/gif.js"></script>
     <style>
+        /* Basic styling for the body and core layout */
         body {
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 0;
-            overflow: hidden;
+            overflow: hidden; /* Prevent accidental scrolling on the main page */
         }
+        /* Canvas specific styles to make it fill its container and look nice */
         #drawingCanvas {
             background-color: #ffffff;
             border: 2px solid #e2e8f0;
             border-radius: 0.75rem;
             box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
-            width: 100%; /* Display canvas fills its container */
-            height: 100%; /* Display canvas fills its container */
-            touch-action: none; /* Disable default touch actions like pinch-zoom */
+            width: 100%; /* Make the canvas responsive to its parent's width */
+            height: 100%; /* Make the canvas responsive to its parent's height */
+            touch-action: none; /* Crucial for drawing apps to prevent browser gestures like pinch-zoom */
         }
+        /* Utility class for flex containers that should grow */
         .flex-grow-container {
             flex-grow: 1;
-            min-height: 0;
+            min-height: 0; /* Important for flex items in a column to shrink correctly */
         }
+        /* Custom scroll behavior for overflow, just in case */
         .overflow-y-auto-custom {
             overflow-y: auto;
         }
+        /* Styling for the main sidebar toolbox */
         #staticToolbox {
-            flex-shrink: 0;
-            width: 256px;
+            flex-shrink: 0; /* Don't let it shrink */
+            width: 256px; /* Fixed width for the toolbox */
             background-color: #f9fafb;
             border-right: 1px solid #e5e7eb;
             padding: 1rem;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
+            overflow-y: auto; /* Allow scrolling within the toolbox if content overflows */
+            -webkit-overflow-scrolling: touch; /* Smoother scrolling on iOS */
         }
+        /* Sections within the toolbox */
         .toolbox-section {
             padding-top: 0.75rem;
             margin-top: 0.75rem;
             border-top: 1px solid #e5e7eb;
         }
+        /* No top border for the very first section */
         .toolbox-section:first-child {
             border-top: none;
             padding-top: 0;
             margin-top: 0;
         }
+        /* Headings for toolbox sections */
         .toolbox-section h2 {
             font-size: 1.125rem;
             font-weight: 600;
             color: #4b5563;
             margin-bottom: 0.75rem;
         }
+        /* Labels for inputs */
         .toolbox-section label {
             font-size: 0.875rem;
             color: #4b5563;
             margin-bottom: 0.25rem;
             display: block;
         }
+        /* Styling for range inputs (sliders) */
         .toolbox-section input[type="range"] {
             width: 100%;
             height: 0.5rem;
         }
+        /* Styling for color input */
         .toolbox-section input[type="color"] {
             width: 100%;
             height: 2.5rem;
         }
+        /* Styling for tool buttons */
         .tool-button {
             padding: 0.625rem 0.75rem;
             border-radius: 0.5rem;
-            transition: all 0.2s;
+            transition: all 0.2s; /* Smooth transition for hover/active states */
             font-size: 1.5rem;
             line-height: 1;
             display: flex;
@@ -81,6 +93,7 @@
             flex-grow: 1;
             min-width: 50px;
         }
+        /* Styles for help text within modals */
         .zoom-info {
             font-size: 0.875rem;
             color: #4b5563;
@@ -89,6 +102,7 @@
         .zoom-info ul {
             padding-left: 1.25rem;
         }
+        /* Keyboard key styling for instructions */
         .zoom-info kbd {
             display: inline-block;
             padding: 0.1rem 0.4rem;
@@ -102,13 +116,14 @@
             border-radius: 0.25rem;
             box-shadow: inset 0 -1px 0 #a0aec0;
         }
+        /* Small help icon for palm rejection */
         .help-icon {
             display: inline-flex;
             justify-content: center;
             align-items: center;
             width: 1.25rem;
             height: 1.25rem;
-            border-radius: 9999px;
+            border-radius: 9999px; /* Makes it a perfect circle */
             background-color: #9ca3af;
             color: #ffffff;
             font-size: 0.75rem;
@@ -136,7 +151,7 @@
                 <div class="toolbox-section">
                     <h2>Tools</h2>
                     <div class="flex flex-wrap gap-1">
-                        <button id="brushTool" class="tool-button bg-blue-600 text-white shadow-md">✎</button>
+                        <button id="pencilTool" class="tool-button bg-blue-600 text-white shadow-md">✏️</button>
                         <button id="eraserTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">🩹</button>
                         <button id="fillTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">🪣</button>
                         <button id="eyedropperTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">💉</button>
@@ -250,22 +265,22 @@
     </div>
 
     <div id="ideaModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
-            <h3 class="text-2xl font-bold text-gray-800 mb-4">✨ Generate Frame Idea</h3>
-            <p class="text-gray-600 mb-4">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md flex flex-col" style="max-height: 90vh;">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 flex-shrink-0">✨ Generate Frame Idea</h3>
+            <p class="text-gray-600 mb-4 flex-shrink-0">
                 Describe what kind of idea you're looking for, e.g., "a character running through a forest," or "a magical creature appearing."
             </p>
-            <input type="text" id="ideaPromptInput" placeholder="Enter your prompt here..." class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <button id="getIdeaBtn" class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200">
+            <input type="text" id="ideaPromptInput" placeholder="Enter your prompt here..." class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 flex-shrink-0">
+            <button id="getIdeaBtn" class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200 flex-shrink-0">
                 Get Idea
             </button>
 
-            <div id="generatedIdeaOutput" class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg hidden">
+            <div id="generatedIdeaOutput" class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg hidden flex-grow overflow-y-auto">
                 <h4 class="text-lg font-semibold text-blue-800 mb-2">Your Idea:</h4>
                 <p id="ideaText" class="text-gray-700 whitespace-pre-wrap"></p>
             </div>
 
-            <button id="closeIdeaModalBtn" class="mt-6 w-full bg-gray-300 text-gray-800 px-4 py-3 rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-200">
+            <button id="closeIdeaModalBtn" class="mt-6 w-full bg-gray-300 text-gray-800 px-4 py-3 rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-200 flex-shrink-0">
                 Close
             </button>
         </div>
@@ -301,6 +316,9 @@
                 <li>
                     <span class="font-semibold">Line Smoothness:</span> If lines appear jagged or pixelated (especially at smaller brush sizes or high canvas resolutions), ensure your browser's "image smoothing" is enabled. This feature is enabled by default in ToonStart to improve line quality.
                 </li>
+                <li>
+                    <span class="font-semibold">Brush Selection:</span> Double-click the 'Pencil' tool to open a menu and choose between 'Brush', 'Pen', and 'Pencil' drawing styles. Each style offers a distinct drawing feel.
+                </li>
             </ul>
             <button id="closeHelpModalBtn" class="mt-6 w-full bg-gray-300 text-gray-800 px-4 py-3 rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-200">
                 Close
@@ -327,9 +345,63 @@
     </div>
 
     <div id="updatesModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
-            <h3 class="text-2xl font-bold text-gray-800 mb-4">✨ ToonStart Updates</h3>
-            <div id="updatesContent" class="text-gray-700 space-y-4">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md flex flex-col" style="max-height: 90vh;">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 flex-shrink-0">✨ ToonStart Updates</h3>
+            <div id="updatesContent" class="text-gray-700 space-y-4 flex-grow overflow-y-auto">
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700">May 27, 2025 - Fixed Modal Scrolling</h4>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><strong>Modal Scrolling:</strong> The "Generate Idea" and "Updates" modals now correctly handle long content by allowing the content to scroll while keeping the "Close" button fixed at the bottom.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700">May 27, 2025 - Brush Selection Persistence Fix</h4>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><strong>Brush Selection:</strong> Fixed an issue where the selected brush type (Brush, Pen, or Pencil) wasn't consistently active after choosing it from the double-click menu. Your brush choice will now stick!</li>
+                        <li><strong>Pencil Tool Behavior:</strong> The main 'Pencil' tool button in the sidebar will now *only* open the brush selection menu on double-click, preventing accidental changes to your brush type.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700">May 27, 2025 - Improved Brush Selection Highlight</h4>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><strong>Clearer Selection:</strong> When you open the brush selection menu, the currently active brush style (Brush, Pen, or Pencil) will now be clearly highlighted, making it easier to see your current choice.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700">May 27, 2025 - Enhanced Brush Styles & Selection</h4>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><strong>Brush Behavior:</strong> The 'Brush', 'Pen', and 'Pencil' tools now have distinct drawing feels:
+                            <ul>
+                                <li>'Pencil' offers a light, sketchy line.</li>
+                                <li>'Pen' draws a solid, straightforward line.</li>
+                                <li>'Brush' provides a slightly softer, more "painterly" stroke.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Tool Selection Reliability:</strong> Fixed an issue where selecting a brush type from the double-click menu wasn't consistently applying the chosen tool.</li>
+                        <li><strong>Pencil Tool Feedback:</strong> The main 'Pencil' tool button will now stay highlighted whenever 'Brush', 'Pen', or 'Pencil' is the active drawing style.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700">May 27, 2025 - Refined Brush Selection</h4>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><strong>Streamlined Tools:</strong> The main toolbox now features only the 'Pencil' tool for drawing.</li>
+                        <li><strong>Intuitive Brush Menu:</strong> Double-clicking the 'Pencil' tool will bring up a menu, allowing you to select between 'Brush', 'Pen', and 'Pencil' drawing styles.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700">May 27, 2025 - New Brush Tools</h4>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><strong>New Brushes:</strong> Added 'Pen' and 'Pencil' tools for more drawing variety.</li>
+                        <li><strong>Brush Selection Menu:</strong> Double-clicking the 'Pencil' tool now brings up a menu to easily switch between 'Brush', 'Pen', and 'Pencil' modes.</li>
+                        <li><strong>Pencil Feel:</strong> The 'Pencil' tool now draws with a lighter, sketchier appearance.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700">May 26, 2025 - Updated GIF Export Logic</h4>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><strong>GIF Export:</strong> Updated the GIF export logic to explicitly draw each frame onto a temporary canvas before adding it to the GIF, ensuring consistent output.</li>
+                    </ul>
+                </div>
                 <div>
                     <h4 class="font-semibold text-lg text-blue-700">May 26, 2025 - Improved Drawing Smoothness</h4>
                     <ul class="list-disc list-inside ml-4 text-sm">
@@ -416,7 +488,7 @@
                     </ul>
                 </div>
             </div>
-            <button id="closeUpdatesModalBtn" class="mt-6 w-full bg-gray-300 text-gray-800 px-4 py-3 rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-200">
+            <button id="closeUpdatesModalBtn" class="mt-6 w-full bg-gray-300 text-gray-800 px-4 py-3 rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-200 flex-shrink-0">
                 Close
             </button>
         </div>
@@ -449,21 +521,40 @@
         </div>
     </div>
 
+    <div id="brushSelectionModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-xs">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Choose Brush</h3>
+            <div class="flex flex-col space-y-3">
+                <button id="selectBrushTool" class="bg-blue-500 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-blue-600">Brush</button>
+                <button id="selectPenTool" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg shadow-sm hover:bg-blue-100">Pen</button>
+                <button id="selectPencilTool" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg shadow-sm hover:bg-blue-100">Pencil</button>
+            </div>
+            <button id="closeBrushSelectionModalBtn" class="mt-6 w-full bg-gray-300 text-gray-800 px-4 py-3 rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-200">
+                Close
+            </button>
+        </div>
+    </div>
+
 
     <script>
-        const canvas = document.getElementById('drawingCanvas');
-        const context = canvas.getContext('2d');
+        // Get references to the main canvas and its 2D rendering context
+        const mainCanvas = document.getElementById('drawingCanvas');
+        const mainCtx = mainCanvas.getContext('2d');
 
-        const drawingBufferCanvas = document.createElement('canvas');
-        const drawingBufferContext = drawingBufferCanvas.getContext('2d');
+        // Create an offscreen canvas for drawing operations to prevent flickering
+        // This is a common technique for smoother drawing performance.
+        const bufferCanvas = document.createElement('canvas');
+        const bufferCtx = bufferCanvas.getContext('2d');
 
-        // Define a fixed internal resolution for the drawing buffer
-        let PROJECT_WIDTH = 800;
-        let PROJECT_HEIGHT = 600;
+        // Initial project dimensions. These can be customized later.
+        let projWidth = 800;
+        let projHeight = 600;
 
-        const messageDisplay = document.getElementById('messageDisplay');
+        // Element to display temporary messages to the user
+        const msgDisplay = document.getElementById('messageDisplay');
 
-        const brushToolBtn = document.getElementById('brushTool');
+        // References to all the tool buttons and input elements
+        const pencilToolBtn = document.getElementById('pencilTool');
         const eraserToolBtn = document.getElementById('eraserTool');
         const fillToolBtn = document.getElementById('fillTool');
         const eyedropperToolBtn = document.getElementById('eyedropperTool');
@@ -472,27 +563,33 @@
         const brushSizeInput = document.getElementById('brushSize');
         const brushSizeValueSpan = document.getElementById('brushSizeValue');
 
+        // Palm rejection toggle and its associated help icon
         const stylusOnlyModeToggle = document.getElementById('stylusOnlyModeToggle');
         let isStylusOnlyModeEnabled = false;
 
+        // Frame management buttons
         const addFrameBtn = document.getElementById('addFrame');
         const deleteFrameBtn = document.getElementById('deleteFrame');
         const duplicateFrameBtn = document.getElementById('duplicateFrame');
         const clearCurrentFrameBtn = document.getElementById('clearCurrentFrame');
 
+        // Project save/load/export buttons
         const saveProjectBtn = document.getElementById('saveProject');
         const loadProjectBtn = document.getElementById('loadProject');
         const exportGifBtn = document.getElementById('exportGif');
 
+        // Animation playback controls
         const playBtn = document.getElementById('playBtn');
         const pauseBtn = document.getElementById('pauseBtn');
         const stopBtn = document.getElementById('stopBtn');
-        const animationSpeedInput = document.getElementById('animationSpeed');
-        const animationSpeedValueSpan = document.getElementById('animationSpeedValue');
+        const animSpeedInput = document.getElementById('animationSpeed');
+        const animSpeedValueSpan = document.getElementById('animationSpeedValue');
 
-        const timelineDiv = document.getElementById('timeline'); // The flex container for frame buttons
-        const timelineContainer = document.getElementById('timelineContainer'); // The scrolling container
+        // Timeline elements
+        const timelineDiv = document.getElementById('timeline');
+        const timelineContainer = document.getElementById('timelineContainer');
 
+        // AI Idea generation modal elements
         const generateIdeaBtn = document.getElementById('generateIdeaBtn');
         const ideaModal = document.getElementById('ideaModal');
         const ideaPromptInput = document.getElementById('ideaPromptInput');
@@ -501,22 +598,27 @@
         const ideaText = document.getElementById('ideaText');
         const closeIdeaModalBtn = document.getElementById('closeIdeaModalBtn');
 
+        // Help modal elements
         const helpBtn = document.getElementById('helpBtn'); 
         const helpModal = document.getElementById('helpModal');
         const closeHelpModalBtn = document.getElementById('closeHelpModalBtn');
 
-        const faqBtn = document.getElementById('faqBtn'); // New FAQ button
+        // FAQ and Updates buttons/modals
+        const faqBtn = document.getElementById('faqBtn');
         const updatesBtn = document.getElementById('updatesBtn');
         const updatesModal = document.getElementById('updatesModal');
         const closeUpdatesModalBtn = document.getElementById('closeUpdatesModalBtn');
 
+        // Undo/Redo buttons
         const undoBtn = document.getElementById('undoBtn');
         const redoBtn = document.getElementById('redoBtn');
 
+        // Palm rejection help modal elements
         const palmRejectionHelpIcon = document.getElementById('palmRejectionHelpIcon');
         const palmRejectionHelpModal = document.getElementById('palmRejectionHelpModal');
         const closePalmRejectionHelpModalBtn = document.getElementById('closePalmRejectionHelpModalBtn');
 
+        // Customize canvas size modal elements
         const customizeBtn = document.getElementById('customizeBtn');
         const customizeModal = document.getElementById('customizeModal');
         const closeCustomizeModalBtn = document.getElementById('closeCustomizeModalBtn');
@@ -525,65 +627,105 @@
         const applyCanvasSizeBtn = document.getElementById('applyCanvasSizeBtn');
         const resetCanvasSizeBtn = document.getElementById('resetCanvasSizeBtn');
 
-        let isDrawing = false;
+        // Brush selection modal elements
+        const brushSelectionModal = document.getElementById('brushSelectionModal');
+        const selectBrushToolBtn = document.getElementById('selectBrushTool');
+        const selectPenToolBtn = document.getElementById('selectPenTool');
+        const selectPencilToolBtn = document.getElementById('selectPencilTool');
+        const closeBrushSelectionModalBtn = document.getElementById('closeBrushSelectionModalBtn');
+
+        // Core state variables for drawing and animation
+        let drawingActive = false;
         let brushColor = '#000000';
         let brushSize = 5;
-        let tool = 'brush';
+        let currentTool = 'brush'; // Default tool, 'brush' is a good starting point
 
-        let frames = [];
-        let currentFrameIndex = 0;
+        // Animation frames stored as Data URLs
+        let framesData = [];
+        let currentFrameIdx = 0;
 
-        let isPlaying = false;
-        let animationSpeed = 10;
-        let animationInterval = null;
+        // Playback state
+        let animPlaying = false;
+        let fps = 10;
+        let animInterval = null;
 
-        let isExporting = false;
-        let exportProgress = 0;
+        // GIF export state
+        let exporting = false;
+        let exportProg = 0;
 
-        let history = [];
-        let historyPointer = -1;
-        const MAX_HISTORY_STATES = 50;
+        // Undo/Redo history management
+        let historyStates = [];
+        let historyPtr = -1;
+        const MAX_HISTORY_STATES = 50; // Limit history to prevent excessive memory use
 
+        // Panning state
         let panOffset = { x: 0, y: 0 };
-        let isPanning = false;
-        let lastPanPoint = { x: 0, y: 0 };
+        let panningActive = false;
+        let lastPanPt = { x: 0, y: 0 }; // Stores the last mouse position during a pan
 
-        const loadedImageCache = new Map();
+        // Cache for loaded images (Data URLs) to avoid re-loading
+        const imageCache = new Map();
 
-        function showMessage(msg) {
-            if (messageDisplay._timeoutId) {
-                clearTimeout(messageDisplay._timeoutId);
+        /**
+         * Shows a temporary message to the user.
+         * @param {string} msg - The message to display.
+         */
+        function showUserMessage(msg) {
+            // Clear any existing timeout to ensure the new message is fully visible
+            if (msgDisplay._timeoutId) {
+                clearTimeout(msgDisplay._timeoutId);
             }
-            messageDisplay.textContent = msg;
-            messageDisplay.classList.remove('hidden', 'opacity-0');
-            messageDisplay.classList.add('opacity-100');
+            msgDisplay.textContent = msg;
+            msgDisplay.classList.remove('hidden', 'opacity-0');
+            msgDisplay.classList.add('opacity-100');
             
-            messageDisplay._timeoutId = setTimeout(() => {
-                messageDisplay.classList.remove('opacity-100');
-                messageDisplay.classList.add('opacity-0');
-                messageDisplay._timeoutId = setTimeout(() => messageDisplay.classList.add('hidden'), 500);
-            }, 2000);
+            // Set a timeout to fade out and hide the message
+            msgDisplay._timeoutId = setTimeout(() => {
+                msgDisplay.classList.remove('opacity-100');
+                msgDisplay.classList.add('opacity-0');
+                // After fade out, truly hide the element
+                msgDisplay._timeoutId = setTimeout(() => msgDisplay.classList.add('hidden'), 500);
+            }, 2000); // Message visible for 2 seconds
         }
 
+        /**
+         * Converts a hex color string to an RGBA array.
+         * @param {string} hex - Like "#RRGGBB".
+         * @returns {number[]} [R, G, B, A] where A is always 255.
+         */
         function hexToRgba(hex) {
             const r = parseInt(hex.slice(1, 3), 16);
             const g = parseInt(hex.slice(3, 5), 16);
             const b = parseInt(hex.slice(5, 7), 16);
-            return [r, g, b, 255];
+            return [r, g, b, 255]; // Alpha is always 255 (fully opaque) for our purposes
         }
 
+        /**
+         * Converts RGBA components back to a hex color string.
+         * @param {number} r - Red (0-255).
+         * @param {number} g - Green (0-255).
+         * @param {number} b - Blue (0-255).
+         * @returns {string} The hex color string.
+         */
         function rgbaToHex(r, g, b) {
             return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
         }
 
+        /**
+         * Loads an image from a Data URL, caching it for speed.
+         * @param {string} src - The image Data URL.
+         * @returns {Promise<HTMLImageElement>} Promise of the loaded Image object.
+         */
         function loadImage(src) {
-            if (loadedImageCache.has(src)) {
-                return Promise.resolve(loadedImageCache.get(src));
+            // Check if the image is already in our cache
+            if (imageCache.has(src)) {
+                return Promise.resolve(imageCache.get(src));
             }
+            // If not, load it and then cache it
             return new Promise((resolve, reject) => {
                 const img = new Image();
                 img.onload = () => {
-                    loadedImageCache.set(src, img);
+                    imageCache.set(src, img); // Store in cache for future use
                     resolve(img);
                 };
                 img.onerror = reject;
@@ -591,135 +733,185 @@
             });
         }
 
-        function saveState() {
-            if (historyPointer < history.length - 1) {
-                history = history.slice(0, historyPointer + 1);
+        /**
+         * Saves the current frames state to the history stack for undo/redo.
+         */
+        function saveStateToHistory() {
+            // If we've undone some actions, discard the "future" history
+            if (historyPtr < historyStates.length - 1) {
+                historyStates = historyStates.slice(0, historyPtr + 1);
             }
-            history.push(JSON.parse(JSON.stringify(frames)));
-            historyPointer++;
+            // Add the current set of frames to the history
+            historyStates.push(JSON.parse(JSON.stringify(framesData)));
+            historyPtr++;
 
-            if (history.length > MAX_HISTORY_STATES) {
-                history.shift();
-                historyPointer--;
+            // Keep history stack from growing too large
+            if (historyStates.length > MAX_HISTORY_STATES) {
+                historyStates.shift(); // Remove the oldest state
+                historyPtr--;
             }
-            updateUndoRedoButtons();
+            updateUndoRedoButtons(); // Update button states
         }
 
-        function undo() {
-            if (historyPointer > 0) {
-                historyPointer--;
-                frames = JSON.parse(JSON.stringify(history[historyPointer]));
-                loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent);
-                updateTimeline();
+        /**
+         * Reverts the editor to the previous state.
+         */
+        function performUndo() {
+            if (historyPtr > 0) {
+                historyPtr--;
+                // Restore frames from the history
+                framesData = JSON.parse(JSON.stringify(historyStates[historyPtr]));
+                // Load the active frame into the offscreen buffer and then render
+                loadFrameIntoBuffer(framesData[currentFrameIdx]).then(renderCanvasDisplay);
+                updateTimelineDisplay();
                 updateUndoRedoButtons();
-                showMessage('Undo successful!');
+                showUserMessage('Undo successful!');
             }
         }
 
-        function redo() {
-            if (historyPointer < history.length - 1) {
-                historyPointer++;
-                frames = JSON.parse(JSON.stringify(history[historyPointer]));
-                loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent);
-                updateTimeline();
+        /**
+         * Reapplies the last undone action.
+         */
+        function performRedo() {
+            if (historyPtr < historyStates.length - 1) {
+                historyPtr++;
+                // Restore frames from the history
+                framesData = JSON.parse(JSON.stringify(historyStates[historyPtr]));
+                // Load the active frame into the offscreen buffer and then render
+                loadFrameIntoBuffer(framesData[currentFrameIdx]).then(renderCanvasDisplay);
+                updateTimelineDisplay();
                 updateUndoRedoButtons();
-                showMessage('Redo successful!');
+                showUserMessage('Redo successful!');
             }
         }
 
+        /**
+         * Updates the disabled state of the Undo and Redo buttons.
+         */
         function updateUndoRedoButtons() {
-            undoBtn.disabled = !(historyPointer > 0);
-            redoBtn.disabled = !(historyPointer < history.length - 1);
+            undoBtn.disabled = !(historyPtr > 0);
+            redoBtn.disabled = !(historyPtr < historyStates.length - 1);
         }
 
+        /**
+         * Loads a frame's image data into the offscreen drawing buffer.
+         * This is where actual drawing happens before displaying.
+         * @param {string} frameData - The Data URL of the frame.
+         */
         async function loadFrameIntoBuffer(frameData) {
-            drawingBufferContext.clearRect(0, 0, drawingBufferCanvas.width, drawingBufferCanvas.height);
-            drawingBufferContext.fillStyle = '#ffffff';
-            drawingBufferContext.fillRect(0, 0, drawingBufferCanvas.width, drawingBufferCanvas.height);
+            // Clear the offscreen buffer first
+            bufferCtx.clearRect(0, 0, bufferCanvas.width, bufferCanvas.height);
+            bufferCtx.fillStyle = '#ffffff';
+            bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
 
+            // If there's actual frame data, draw it
             if (frameData && typeof frameData === 'string' && frameData.startsWith('data:image/png;base64,')) {
                 try {
-                    const img = loadedImageCache.get(frameData) || await loadImage(frameData);
-                    drawingBufferContext.drawImage(img, 0, 0, drawingBufferCanvas.width, drawingBufferCanvas.height);
+                    // Try to get from cache, otherwise load it
+                    const img = imageCache.get(frameData) || await loadImage(frameData);
+                    bufferCtx.drawImage(img, 0, 0, bufferCanvas.width, bufferCanvas.height);
                 } catch (error) {
-                    console.error("Error loading frame data into buffer:", error);
+                    console.error("Oops, couldn't load frame data into the buffer:", error);
                 }
             }
         }
 
-        async function renderCanvasContent() {
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.fillStyle = '#ffffff';
-            context.fillRect(0, 0, canvas.width, canvas.height);
+        /**
+         * Renders the content from the offscreen buffer onto the main visible canvas.
+         * This is called frequently to update the display.
+         */
+        async function renderCanvasDisplay() {
+            // Clear the visible canvas
+            mainCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+            mainCtx.fillStyle = '#ffffff';
+            mainCtx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
 
-            context.save();
-            // Apply pan transforms (zoom is removed)
-            context.translate(panOffset.x, panOffset.y);
+            mainCtx.save(); // Save the current transformation state
+
+            // Apply panning offset
+            mainCtx.translate(panOffset.x, panOffset.y);
             
-            const aspectRatio = PROJECT_WIDTH / PROJECT_HEIGHT;
-            let drawWidth = canvas.width;
-            let drawHeight = canvas.width / aspectRatio;
+            // Calculate dimensions to draw the project content scaled to fit the display canvas
+            const aspectRatio = projWidth / projHeight;
+            let displayContentWidth = mainCanvas.width;
+            let displayContentHeight = mainCanvas.width / aspectRatio;
 
-            if (drawHeight > canvas.height) {
-                drawHeight = canvas.height;
-                drawWidth = canvas.height * aspectRatio;
+            // Adjust if height is too large for the display canvas
+            if (displayContentHeight > mainCanvas.height) {
+                displayContentHeight = mainCanvas.height;
+                displayContentWidth = mainCanvas.height * aspectRatio;
             }
 
-            const offsetX = (canvas.width - drawWidth) / 2;
-            const offsetY = (canvas.height - drawHeight) / 2;
+            // Center the drawing within the display canvas
+            const offsetX = (mainCanvas.width - displayContentWidth) / 2;
+            const offsetY = (mainCanvas.height - displayContentHeight) / 2;
 
-            // Draw current frame from buffer
-            context.globalAlpha = 1.0;
-            context.globalCompositeOperation = 'source-over';
-            context.drawImage(drawingBufferCanvas, offsetX, offsetY, drawWidth, drawHeight);
+            // Draw the content from the offscreen buffer
+            mainCtx.globalAlpha = 1.0;
+            mainCtx.globalCompositeOperation = 'source-over';
+            mainCtx.drawImage(bufferCanvas, offsetX, offsetY, displayContentWidth, displayContentHeight);
 
-            // Draw dashed border around the drawing area
-            context.strokeStyle = '#888888'; // Gray color for the border
-            context.lineWidth = 2; // Thickness of the border
-            context.setLineDash([5, 5]); // Dashed line pattern (5px line, 5px gap)
-            context.strokeRect(offsetX, offsetY, drawWidth, drawHeight);
-            context.setLineDash([]); // Reset line dash to solid for other drawings
+            // Draw a dashed border to show the actual project boundaries
+            mainCtx.strokeStyle = '#888888';
+            mainCtx.lineWidth = 2;
+            mainCtx.setLineDash([5, 5]); // Dashed line
+            mainCtx.strokeRect(offsetX, offsetY, displayContentWidth, displayContentHeight);
+            mainCtx.setLineDash([]); // Reset line dash
 
-            context.restore();
-            context.globalAlpha = 1.0;
-            context.globalCompositeOperation = 'source-over';
+            mainCtx.restore(); // Restore the transformation state
+            mainCtx.globalAlpha = 1.0; // Reset alpha
+            mainCtx.globalCompositeOperation = 'source-over'; // Reset composite operation
         }
 
-        function saveCurrentFrame() {
-            frames[currentFrameIndex] = drawingBufferCanvas.toDataURL('image/png');
+        /**
+         * Saves the current drawing from the offscreen buffer into the active frame.
+         */
+        function saveCurrentFrameData() {
+            framesData[currentFrameIdx] = bufferCanvas.toDataURL('image/png');
         }
 
-        function getTransformedCoords(clientX, clientY) {
-            const rect = canvas.getBoundingClientRect();
+        /**
+         * Transforms mouse/touch coordinates on the main canvas to coordinates within the project's drawing space.
+         * Accounts for panning and scaling.
+         * @param {number} clientX - The clientX coordinate from the event.
+         * @param {number} clientY - The clientY coordinate from the event.
+         * @returns {{x: number, y: number}} The transformed coordinates.
+         */
+        function getTransformedDrawingCoords(clientX, clientY) {
+            const rect = mainCanvas.getBoundingClientRect();
             const canvasX = clientX - rect.left;
             const canvasY = clientY - rect.top;
 
-            // Reverse the offset applied in renderCanvasContent (no scaling now)
-            const aspectRatio = PROJECT_WIDTH / PROJECT_HEIGHT;
-            let displayContentWidth = canvas.width;
-            let displayContentHeight = canvas.width / aspectRatio;
+            // Calculate current display dimensions of the project content on the canvas
+            const aspectRatio = projWidth / projHeight;
+            let displayContentWidth = mainCanvas.width;
+            let displayContentHeight = mainCanvas.width / aspectRatio;
 
-            if (displayContentHeight > canvas.height) {
-                displayContentHeight = canvas.height;
-                displayContentWidth = canvas.height * aspectRatio;
+            if (displayContentHeight > mainCanvas.height) {
+                displayContentHeight = mainCanvas.height;
+                displayContentWidth = mainCanvas.height * aspectRatio;
             }
 
-            const displayOffsetX = (canvas.width - displayContentWidth) / 2;
-            const displayOffsetY = (canvas.height - displayContentHeight) / 2;
+            const displayOffsetX = (mainCanvas.width - displayContentWidth) / 2;
+            const displayOffsetY = (mainCanvas.height - displayContentHeight) / 2;
 
-            // Apply pan offset first, then subtract the content's offset on the display canvas
+            // Adjust for pan offset and the centering offset
             const transformedX = (canvasX - panOffset.x - displayOffsetX);
             const transformedY = (canvasY - panOffset.y - displayOffsetY);
 
-            // Scale these coordinates from the display content area back to the project's internal resolution
-            const x = transformedX * (PROJECT_WIDTH / displayContentWidth);
-            const y = transformedY * (PROJECT_HEIGHT / displayContentHeight);
+            // Scale back to the original project dimensions
+            const x = transformedX * (projWidth / displayContentWidth);
+            const y = transformedY * (projHeight / displayContentHeight);
 
             return { x, y };
         }
 
-        function startDrawing(e) {
-            e.preventDefault();
+        /**
+         * Handles the start of a drawing or tool interaction (mousedown/touchstart).
+         * @param {MouseEvent|TouchEvent} e - The event object.
+         */
+        function handleInteractionStart(e) {
+            e.preventDefault(); // Prevent default browser actions like scrolling/zooming
 
             let clientX, clientY;
             if (e.touches && e.touches.length > 0) {
@@ -730,64 +922,87 @@
                 clientY = e.clientY;
             }
 
+            // If palm rejection is enabled, ignore non-stylus touches
             if (isStylusOnlyModeEnabled && e.touches && e.touches.length > 0) {
-                const touchType = e.touches[0].touchType || 'direct';
+                const touchType = e.touches[0].touchType || 'direct'; // 'direct' usually means finger
                 if (touchType === 'direct') {
-                    isDrawing = false;
-                    return;
+                    drawingActive = false; // Don't start drawing
+                    return; // Exit early
                 }
             }
 
-            if (tool === 'eyedropper') {
-                const rect = canvas.getBoundingClientRect();
+            // Handle Eyedropper tool
+            if (currentTool === 'eyedropper') {
+                const rect = mainCanvas.getBoundingClientRect();
                 const canvasX = clientX - rect.left;
                 const canvasY = clientY - rect.top;
                 
-                const imageData = context.getImageData(canvasX, canvasY, 1, 1).data;
-                brushColorInput.value = rgbaToHex(imageData[0], imageData[1], imageData[2]);
-                brushColor = brushColorInput.value;
-                drawingBufferContext.strokeStyle = brushColor; // Update drawing buffer context
-                tool = 'brush';
-                updateToolButtons();
-                showMessage('Color picked!');
-                return;
+                // Get pixel data from the *visible* canvas
+                const imageData = mainCtx.getImageData(canvasX, canvasY, 1, 1).data;
+                brushColor = rgbaToHex(imageData[0], imageData[1], imageData[2]);
+                brushColorInput.value = brushColor; // Update the color picker UI
+                bufferCtx.strokeStyle = brushColor; // Set drawing color
+                
+                currentTool = 'brush'; // Switch back to brush after picking
+                updateToolButtonStates(); // Update UI to reflect tool change
+                showUserMessage('Color picked!');
+                return; // Interaction handled, no drawing
             }
 
-            if (tool === 'pan') {
-                isPanning = true;
-                lastPanPoint = { x: clientX, y: clientY };
-                return;
+            // Handle Pan tool
+            if (currentTool === 'pan') {
+                panningActive = true;
+                lastPanPt = { x: clientX, y: clientY }; // Store starting point for panning
+                return; // Interaction handled, no drawing
             }
 
-            if (tool === 'fill') {
-                loadFrameIntoBuffer(frames[currentFrameIndex]).then(() => {
-                    const { x, y } = getTransformedCoords(clientX, clientY);
-                    floodFill(x, y, hexToRgba(brushColor), drawingBufferContext, drawingBufferCanvas.width, drawingBufferCanvas.height);
-                    frames[currentFrameIndex] = drawingBufferCanvas.toDataURL('image/png');
-                    renderCanvasContent();
-                    saveState();
-                    showMessage('Fill applied!');
+            // Handle Fill tool (Flood Fill)
+            if (currentTool === 'fill') {
+                // Load the current frame into the buffer before performing fill
+                loadFrameIntoBuffer(framesData[currentFrameIdx]).then(() => {
+                    const { x, y } = getTransformedDrawingCoords(clientX, clientY);
+                    // Perform the flood fill operation
+                    floodFill(x, y, hexToRgba(brushColor), bufferCtx, bufferCanvas.width, bufferCanvas.height);
+                    saveCurrentFrameData(); // Save the modified frame
+                    renderCanvasDisplay(); // Update the display
+                    saveStateToHistory(); // Record for undo/redo
+                    showUserMessage('Fill applied!');
                 }).catch(error => {
-                    console.error("Error loading frame for fill:", error);
-                    showMessage('Error applying fill.');
+                    console.error("Error loading frame for fill operation:", error);
+                    showUserMessage('Error applying fill.');
                 });
-                return;
+                return; // Interaction handled, no drawing
             }
 
-            // Set drawing properties explicitly before starting a path
-            drawingBufferContext.lineCap = 'round';
-            drawingBufferContext.lineJoin = 'round';
-            drawingBufferContext.strokeStyle = brushColor;
-            drawingBufferContext.lineWidth = brushSize;
+            // For drawing tools (pencil, brush, pen, eraser)
+            bufferCtx.lineCap = 'round'; // Round line endings
+            bufferCtx.lineJoin = 'round'; // Round line joins
+            bufferCtx.strokeStyle = brushColor;
+            bufferCtx.lineWidth = brushSize;
+            bufferCtx.globalCompositeOperation = 'source-over'; // Default blend mode
 
-            const { x, y } = getTransformedCoords(clientX, clientY);
-            drawingBufferContext.beginPath();
-            drawingBufferContext.moveTo(x, y);
-            isDrawing = true;
+            // Apply specific alpha (opacity) for different brush types
+            if (currentTool === 'pencil') {
+                bufferCtx.globalAlpha = 0.4; // Lighter, sketchy feel
+            } else if (currentTool === 'brush') {
+                bufferCtx.globalAlpha = 0.7; // Slightly softer, painterly
+            } else { // 'pen' tool
+                bufferCtx.globalAlpha = 1.0; // Solid, opaque line
+            }
+
+            // Get transformed coordinates to start drawing
+            const { x, y } = getTransformedDrawingCoords(clientX, clientY);
+            bufferCtx.beginPath(); // Start a new path
+            bufferCtx.moveTo(x, y); // Move to the starting point
+            drawingActive = true; // Set drawing flag
         }
 
-        function draw(e) {
-            e.preventDefault();
+        /**
+         * Handles drawing or tool interaction during movement (mousemove/touchmove).
+         * @param {MouseEvent|TouchEvent} e - The event object.
+         */
+        function handleInteractionMove(e) {
+            e.preventDefault(); // Prevent default browser actions
 
             let clientX, clientY;
             if (e.touches && e.touches.length > 0) {
@@ -798,59 +1013,89 @@
                 clientY = e.clientY;
             }
 
+            // If palm rejection is enabled, ignore non-stylus touches during move
             if (isStylusOnlyModeEnabled && e.touches && e.touches.length > 0) {
                 const touchType = e.touches[0].touchType || 'direct';
                 if (touchType === 'direct') {
-                    isDrawing = false;
+                    drawingActive = false; // Stop drawing if a finger is detected mid-stroke
                     return;
                 }
             }
 
-            if (tool === 'pan' && isPanning) {
-                const dx = clientX - lastPanPoint.x;
-                const dy = clientY - lastPanPoint.y;
+            // Handle Panning logic
+            if (currentTool === 'pan' && panningActive) {
+                const dx = clientX - lastPanPt.x;
+                const dy = clientY - lastPanPt.y;
                 panOffset.x += dx;
                 panOffset.y += dy;
-                lastPanPoint = { x: clientX, y: clientY };
-                renderCanvasContent();
-                return;
+                lastPanPt = { x: clientX, y: clientY }; // Update last position
+                renderCanvasDisplay(); // Re-render canvas with new pan offset
+                return; // Panning handled, no drawing
             }
 
-            if (!isDrawing) return;
+            // If not drawing, just exit
+            if (!drawingActive) return;
 
-            const { x, y } = getTransformedCoords(clientX, clientY);
-            drawingBufferContext.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
-            drawingBufferContext.lineTo(x, y);
-            drawingBufferContext.stroke();
-            renderCanvasContent();
+            // Get transformed coordinates for the current point
+            const { x, y } = getTransformedDrawingCoords(clientX, clientY);
+            
+            // Set composite operation for eraser (makes pixels transparent)
+            if (currentTool === 'eraser') {
+                bufferCtx.globalCompositeOperation = 'destination-out';
+            } else {
+                bufferCtx.globalCompositeOperation = 'source-over'; // Back to normal for drawing tools
+            }
+
+            bufferCtx.lineTo(x, y); // Draw a line segment to the current point
+            bufferCtx.stroke(); // Apply the stroke
+            renderCanvasDisplay(); // Update the visible canvas
         }
 
-        function stopDrawing(e) {
-            e.preventDefault();
+        /**
+         * Handles the end of a drawing or tool interaction (mouseup/touchend/mouseleave).
+         * @param {MouseEvent|TouchEvent} e - The event object.
+         */
+        function handleInteractionEnd(e) {
+            e.preventDefault(); // Prevent default browser actions
 
-            if (tool !== 'fill' && tool !== 'eyedropper' && tool !== 'pan') {
-                if (isDrawing) {
-                    drawingBufferContext.closePath();
-                    drawingBufferContext.globalCompositeOperation = 'source-over';
-                    saveCurrentFrame();
-                    saveState();
+            // Only save state if a drawing tool was active and drawing occurred
+            if (currentTool !== 'fill' && currentTool !== 'eyedropper' && currentTool !== 'pan') {
+                if (drawingActive) {
+                    bufferCtx.closePath(); // Close the current drawing path
+                    bufferCtx.globalCompositeOperation = 'source-over'; // Reset blend mode
+                    bufferCtx.globalAlpha = 1.0; // Reset opacity
+                    saveCurrentFrameData(); // Save the final stroke to the current frame
+                    saveStateToHistory(); // Record this state for undo/redo
                 }
             }
-            isDrawing = false;
-            isPanning = false;
-            renderCanvasContent();
+            drawingActive = false; // Reset drawing flag
+            panningActive = false; // Reset panning flag
+            renderCanvasDisplay(); // Ensure the display is updated one last time
         }
 
+        /**
+         * Implements a basic flood fill algorithm.
+         * @param {number} startX - X coordinate to start fill from.
+         * @param {number} startY - Y coordinate to start fill from.
+         * @param {number[]} fillColor - RGBA array of the color to fill with.
+         * @param {CanvasRenderingContext2D} ctx - The context to draw on (offscreen buffer context).
+         * @param {number} width - Width of the canvas.
+         * @param {number} height - Height of the canvas.
+         */
         function floodFill(startX, startY, fillColor, ctx, width, height) {
+            // Get all pixel data from the canvas
             const imageData = ctx.getImageData(0, 0, width, height);
             const pixels = imageData.data;
 
+            // Helper to get color of a pixel
             const getPixelColor = (x, y) => {
+                // Check bounds first
                 if (x < 0 || x >= width || y < 0 || y >= height) return [-1, -1, -1, -1];
-                const index = (y * width + x) * 4;
+                const index = (y * width + x) * 4; // Each pixel has 4 components (RGBA)
                 return [pixels[index], pixels[index + 1], pixels[index + 2], pixels[index + 3]];
             };
 
+            // Helper to set color of a pixel
             const setPixelColor = (x, y, color) => {
                 const index = (y * width + x) * 4;
                 pixels[index] = color[0];
@@ -859,8 +1104,10 @@
                 pixels[index + 3] = color[3];
             };
 
+            // Get the color of the starting pixel
             const startColor = getPixelColor(Math.floor(startX), Math.floor(startY));
 
+            // If the start color is out of bounds or already the fill color, do nothing
             if (startColor[0] === -1 || (startColor[0] === fillColor[0] &&
                 startColor[1] === fillColor[1] &&
                 startColor[2] === fillColor[2] &&
@@ -868,298 +1115,371 @@
                 return;
             }
 
+            // Use a stack for the fill algorithm
             const pixelStack = [[Math.floor(startX), Math.floor(startY)]];
-            const visited = new Set();
+            const visited = new Set(); // Keep track of visited pixels to avoid infinite loops
 
-            const matchColor = (color1, color2, tolerance = 5) => {
+            // Function to check if two colors are "close enough" (with a tolerance)
+            const colorsMatch = (color1, color2, tolerance = 5) => {
                 return Math.abs(color1[0] - color2[0]) < tolerance &&
                        Math.abs(color1[1] - color2[1]) < tolerance &&
                        Math.abs(color1[2] - color2[2]) < tolerance &&
                        Math.abs(color1[3] - color2[3]) < tolerance;
             };
 
+            // Main fill loop
             while (pixelStack.length > 0) {
                 const [x, y] = pixelStack.pop();
-                const key = `${x},${y}`;
+                const key = `${x},${y}`; // Unique key for visited set
 
-                if (visited.has(key)) continue;
-                visited.add(key);
+                if (visited.has(key)) continue; // Skip if already visited
+                visited.add(key); // Mark as visited
 
-                if (x >= 0 && x < width && y >= 0 && y < height && matchColor(getPixelColor(x, y), startColor)) {
-                    setPixelColor(x, y, fillColor);
+                // If current pixel is within bounds and matches the starting color
+                if (x >= 0 && x < width && y >= 0 && y < height && colorsMatch(getPixelColor(x, y), startColor)) {
+                    setPixelColor(x, y, fillColor); // Set its color to the fill color
 
+                    // Add neighboring pixels to the stack to be checked
                     pixelStack.push([x + 1, y]);
                     pixelStack.push([x - 1, y]);
                     pixelStack.push([x, y + 1]);
                     pixelStack.push([x, y - 1]);
                 }
             }
-            ctx.putImageData(imageData, 0, 0);
+            ctx.putImageData(imageData, 0, 0); // Put the modified pixel data back
         }
 
-        function updateTimeline() {
-            timelineDiv.innerHTML = '';
-            frames.forEach((_, index) => {
-                const button = document.createElement('button');
-                button.textContent = `F${index + 1}`;
-                button.classList.add('flex-shrink-0', 'w-16', 'h-16', 'border-2', 'rounded-lg', 'flex', 'items-center', 'justify-center', 'text-sm', 'font-bold', 'transition-all', 'duration-200');
-                if (index === currentFrameIndex) {
-                    button.classList.add('border-blue-600', 'bg-blue-100', 'text-blue-800', 'shadow-md', 'scale-105');
+        /**
+         * Updates the visual representation of the timeline with frame buttons.
+         */
+        function updateTimelineDisplay() {
+            timelineDiv.innerHTML = ''; // Clear existing buttons
+            framesData.forEach((_, index) => {
+                const frameButton = document.createElement('button');
+                frameButton.textContent = `F${index + 1}`; // Display "F1", "F2", etc.
+                frameButton.classList.add('flex-shrink-0', 'w-16', 'h-16', 'border-2', 'rounded-lg', 'flex', 'items-center', 'justify-center', 'text-sm', 'font-bold', 'transition-all', 'duration-200');
+                
+                // Highlight the currently active frame
+                if (index === currentFrameIdx) {
+                    frameButton.classList.add('border-blue-600', 'bg-blue-100', 'text-blue-800', 'shadow-md', 'scale-105');
                 } else {
-                    button.classList.add('border-gray-300', 'bg-white', 'text-gray-600', 'hover:border-blue-400');
+                    frameButton.classList.add('border-gray-300', 'bg-white', 'text-gray-600', 'hover:border-blue-400');
                 }
-                button.onclick = () => {
-                    if (isPlaying) pauseAnimation();
-                    currentFrameIndex = index;
-                    loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent);
-                    updateTimeline();
+                
+                // Set click handler to switch frames
+                frameButton.onclick = () => {
+                    if (animPlaying) pauseAnimationPlayback(); // Pause if playing
+                    currentFrameIdx = index; // Set new active frame
+                    loadFrameIntoBuffer(framesData[currentFrameIdx]).then(renderCanvasDisplay); // Load and render
+                    updateTimelineDisplay(); // Re-render timeline to update highlight
                 };
-                timelineDiv.appendChild(button);
+                timelineDiv.appendChild(frameButton);
             });
         }
 
+        /**
+         * Adds a new blank frame after the current active frame.
+         */
         function addFrame() {
-            saveCurrentFrame();
+            saveCurrentFrameData(); // Save current frame's drawing before switching
 
-            drawingBufferContext.clearRect(0, 0, drawingBufferCanvas.width, drawingBufferCanvas.height);
-            drawingBufferContext.fillStyle = '#ffffff';
-            drawingBufferContext.fillRect(0, 0, drawingBufferCanvas.width, drawingBufferCanvas.height);
-            const blankCanvasData = drawingBufferCanvas.toDataURL('image/png');
+            // Create a blank canvas image data
+            bufferCtx.clearRect(0, 0, bufferCanvas.width, bufferCanvas.height);
+            bufferCtx.fillStyle = '#ffffff';
+            bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
+            const blankFrameData = bufferCanvas.toDataURL('image/png');
 
-            frames.splice(currentFrameIndex + 1, 0, blankCanvasData);
-            currentFrameIndex++;
-            loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent);
-            updateTimeline();
-            saveState();
-            showMessage('New frame added!');
+            // Insert the new blank frame into the sequence
+            framesData.splice(currentFrameIdx + 1, 0, blankFrameData);
+            currentFrameIdx++; // Move to the new frame
+            loadFrameIntoBuffer(framesData[currentFrameIdx]).then(renderCanvasDisplay); // Load and display
+            updateTimelineDisplay(); // Update timeline UI
+            saveStateToHistory(); // Record for undo/redo
+            showUserMessage('New frame added!');
         }
 
+        /**
+         * Deletes the current active frame. Prevents deleting the last frame.
+         */
         function deleteFrame() {
-            if (frames.length <= 1) {
-                showMessage('Cannot delete the last frame!');
+            if (framesData.length <= 1) {
+                showUserMessage('Cannot delete the last frame! You need at least one.');
                 return;
             }
-            frames.splice(currentFrameIndex, 1);
-            if (currentFrameIndex >= frames.length) {
-                currentFrameIndex = frames.length - 1;
+            framesData.splice(currentFrameIdx, 1); // Remove the current frame
+            // Adjust active frame index if the last frame was deleted
+            if (currentFrameIdx >= framesData.length) {
+                currentFrameIdx = framesData.length - 1;
             }
-            loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent);
-            updateTimeline();
-            saveState();
-            showMessage('Frame deleted!');
+            loadFrameIntoBuffer(framesData[currentFrameIdx]).then(renderCanvasDisplay); // Load and display
+            updateTimelineDisplay(); // Update timeline UI
+            saveStateToHistory(); // Record for undo/redo
+            showUserMessage('Frame deleted!');
         }
 
+        /**
+         * Duplicates the current active frame and inserts it after.
+         */
         function duplicateFrame() {
-            const currentFrameData = frames[currentFrameIndex];
-            frames.splice(currentFrameIndex + 1, 0, currentFrameData);
-            currentFrameIndex++;
-            loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent);
-            updateTimeline();
-            saveState();
-            showMessage('Frame duplicated!');
+            const currentFrameData = framesData[currentFrameIdx]; // Get data of current frame
+            framesData.splice(currentFrameIdx + 1, 0, currentFrameData); // Insert a copy
+            currentFrameIdx++; // Move to the duplicated frame
+            loadFrameIntoBuffer(framesData[currentFrameIdx]).then(renderCanvasDisplay); // Load and display
+            updateTimelineDisplay(); // Update timeline UI
+            saveStateToHistory(); // Record for undo/redo
+            showUserMessage('Frame duplicated!');
         }
 
+        /**
+         * Clears all drawing from the current active frame.
+         */
         function clearCurrentFrame() {
-            drawingBufferContext.clearRect(0, 0, drawingBufferCanvas.width, drawingBufferCanvas.height);
-            drawingBufferContext.fillStyle = '#ffffff';
-            drawingBufferContext.fillRect(0, 0, drawingBufferCanvas.width, drawingBufferCanvas.height);
-            saveCurrentFrame();
-            loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent);
-            saveState();
-            showMessage('Current frame cleared!');
+            // Clear the offscreen buffer completely
+            bufferCtx.clearRect(0, 0, bufferCanvas.width, bufferCanvas.height);
+            bufferCtx.fillStyle = '#ffffff';
+            bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
+            saveCurrentFrameData(); // Save the now blank frame
+            loadFrameIntoBuffer(framesData[currentFrameIdx]).then(renderCanvasDisplay); // Load and display
+            saveStateToHistory(); // Record for undo/redo
+            showUserMessage('Current frame cleared!');
         }
 
+        /**
+         * Saves the entire animation project to local storage.
+         */
         function saveProject() {
-            saveCurrentFrame();
-            localStorage.setItem('animationProject', JSON.stringify(frames));
-            localStorage.setItem('currentFrameIndex', currentFrameIndex.toString());
-            // Also save current project dimensions
-            localStorage.setItem('projectWidth', PROJECT_WIDTH.toString());
-            localStorage.setItem('projectHeight', PROJECT_HEIGHT.toString());
-            showMessage('Animation project saved!');
+            saveCurrentFrameData(); // Ensure the current frame's drawing is saved
+            localStorage.setItem('animationProject', JSON.stringify(framesData));
+            localStorage.setItem('currentFrameIndex', currentFrameIdx.toString());
+            localStorage.setItem('projectWidth', projWidth.toString());
+            localStorage.setItem('projectHeight', projHeight.toString());
+            showUserMessage('Animation project saved!');
         }
 
+        /**
+         * Loads an animation project from local storage.
+         */
         function loadProject() {
-            const savedProject = localStorage.getItem('animationProject');
-            const savedIndex = localStorage.getItem('currentFrameIndex');
-            const savedWidth = localStorage.getItem('projectWidth');
-            const savedHeight = localStorage.getItem('projectHeight');
+            const savedProjectData = localStorage.getItem('animationProject');
+            const savedActiveIndex = localStorage.getItem('currentFrameIndex');
+            const savedProjectWidth = localStorage.getItem('projectWidth');
+            const savedProjectHeight = localStorage.getItem('projectHeight');
 
-            if (!savedProject) {
-                showMessage('No saved animation project found!');
+            if (!savedProjectData) {
+                showUserMessage('No saved animation project found! Start drawing something new!');
                 return;
             }
 
             try {
-                const loadedFrames = JSON.parse(savedProject);
+                const loadedFrames = JSON.parse(savedProjectData);
                 if (loadedFrames && Array.isArray(loadedFrames) && loadedFrames.length > 0) {
-                    frames = loadedFrames;
-                    currentFrameIndex = Math.min(parseInt(savedIndex, 10) || 0, frames.length - 1);
+                    framesData = loadedFrames;
+                    currentFrameIdx = Math.min(parseInt(savedActiveIndex, 10) || 0, framesData.length - 1);
                     
-                    // Update project dimensions if saved
-                    const newWidth = parseInt(savedWidth, 10) || 800;
-                    const newHeight = parseInt(savedHeight, 10) || 600;
+                    const newWidth = parseInt(savedProjectWidth, 10) || 800;
+                    const newHeight = parseInt(savedProjectHeight, 10) || 600;
                     
-                    if (newWidth !== PROJECT_WIDTH || newHeight !== PROJECT_HEIGHT) {
-                        PROJECT_WIDTH = newWidth;
-                        PROJECT_HEIGHT = newHeight;
-                        projectWidthInput.value = PROJECT_WIDTH;
-                        projectHeightInput.value = PROJECT_HEIGHT;
-                        // No need to call resizeDrawingBufferAndFrames here, as loadFrameIntoBuffer will handle it
-                        // based on the updated PROJECT_WIDTH and PROJECT_HEIGHT
+                    // If project dimensions changed, apply them
+                    if (newWidth !== projWidth || newHeight !== projHeight) {
+                        projWidth = newWidth;
+                        projHeight = newHeight;
+                        projectWidthInput.value = projWidth;
+                        projectHeightInput.value = projHeight;
                     }
                     
-                    history = [];
-                    historyPointer = -1;
-                    saveState();
-                    loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent); // Load and render after setting dimensions
-                    updateTimeline();
-                    showMessage('Animation project loaded!');
+                    // Reset history when loading a new project
+                    historyStates = [];
+                    historyPtr = -1;
+                    saveStateToHistory(); // Save the loaded state as the first history entry
+                    loadFrameIntoBuffer(framesData[currentFrameIdx]).then(renderCanvasDisplay);
+                    updateTimelineDisplay();
+                    showUserMessage('Animation project loaded successfully!');
                 } else {
-                    showMessage('Saved project data is corrupt or empty.');
+                    showUserMessage('Hmm, saved project data seems a bit off or empty.');
                 }
             } catch (error) {
-                console.error("Error parsing loaded project:", error);
-                showMessage('Error loading project data.');
+                console.error("Error trying to parse loaded project data:", error);
+                showUserMessage('Something went wrong loading the project data.');
             }
         }
 
-        function playAnimation() {
-            if (frames.length === 0) {
-                showMessage('No frames to play!');
+        /**
+         * Starts playing the animation sequence.
+         */
+        function startAnimationPlayback() {
+            if (framesData.length === 0) {
+                showUserMessage('Can\'t play an animation with no frames!');
                 return;
             }
-            if (isPlaying) return;
+            if (animPlaying) return; // Already playing
 
-            isPlaying = true;
+            animPlaying = true;
             
-            renderCanvasContent(); 
+            renderCanvasDisplay(); // Render the current frame immediately
 
-            const interval = 1000 / animationSpeed;
-            animationInterval = setInterval(() => {
-                currentFrameIndex = (currentFrameIndex + 1) % frames.length;
-                loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent);
-                updateTimeline();
-            }, interval);
+            const frameDelay = 1000 / fps; // Calculate delay based on FPS
+            animInterval = setInterval(() => {
+                // Move to the next frame, looping back to start if at the end
+                currentFrameIdx = (currentFrameIdx + 1) % framesData.length;
+                loadFrameIntoBuffer(framesData[currentFrameIdx]).then(renderCanvasDisplay);
+                updateTimelineDisplay(); // Keep timeline highlight updated
+            }, frameDelay);
+            
+            // Update button states
             playBtn.disabled = true;
             pauseBtn.disabled = false;
             stopBtn.disabled = false;
-            showMessage('Playing animation...');
+            showUserMessage('Playing animation...');
         }
 
-        function pauseAnimation() {
-            if (animationInterval) {
-                clearInterval(animationInterval);
-                animationInterval = null;
+        /**
+         * Pauses the currently playing animation.
+         */
+        function pauseAnimationPlayback() {
+            if (animInterval) {
+                clearInterval(animInterval); // Stop the interval timer
+                animInterval = null;
             }
-            isPlaying = false;
+            animPlaying = false;
+            // Update button states
             playBtn.disabled = false;
             pauseBtn.disabled = true;
-            showMessage('Animation paused.');
+            showUserMessage('Animation paused.');
         }
 
-        function stopAnimation() {
-            pauseAnimation();
-            currentFrameIndex = 0;
-            loadFrameIntoBuffer(frames[currentFrameIndex]).then(renderCanvasContent);
-            updateTimeline();
+        /**
+         * Stops the animation and resets to the first frame.
+         */
+        function stopAnimationPlayback() {
+            pauseAnimationPlayback(); // First, pause it
+            currentFrameIdx = 0; // Go back to the first frame
+            loadFrameIntoBuffer(framesData[currentFrameIdx]).then(renderCanvasDisplay);
+            updateTimelineDisplay(); // Update timeline highlight
+            // Update button states
             playBtn.disabled = false;
             pauseBtn.disabled = true;
             stopBtn.disabled = true;
-            showMessage('Animation stopped.');
+            showUserMessage('Animation stopped.');
         }
 
-        async function exportGif() {
+        /**
+         * Exports the entire animation sequence as a GIF file.
+         */
+        async function exportGifAnimation() {
+            // Check if GIF.js library is available
             if (typeof GIF === 'undefined') {
-                showMessage('GIF.js library not loaded. Cannot export GIF.');
-                console.error('GIF.js is not available. Ensure the script is loaded.');
+                showUserMessage('GIF.js library not loaded. Cannot export GIF.');
+                console.error('GIF.js is missing! Make sure the script is loaded.');
                 return;
             }
-            if (frames.length === 0) {
-                showMessage('No frames to export!');
+            if (framesData.length === 0) {
+                showUserMessage('Nothing to export! Add some frames first.');
                 return;
             }
 
-            isExporting = true;
-            exportProgress = 0;
-            exportGifBtn.textContent = `Exporting GIF... 0%`;
+            exporting = true;
+            exportProg = 0;
+            // Update UI to show export progress
+            exportGifBtn.textContent = 'Exporting GIF... 0%';
             exportGifBtn.disabled = true;
-            showMessage('Generating GIF...');
+            showUserMessage('Generating GIF, this might take a moment...');
 
-            const gif = new GIF({
-                workers: 2,
-                quality: 10,
-                delay: 1000 / animationSpeed,
-                width: drawingBufferCanvas.width, // Use fixed internal resolution
-                height: drawingBufferCanvas.height, // Use fixed internal resolution
-                background: '#ffffff',
-                transparent: '#ffffff'
+            // Initialize GIF.js with desired settings
+            const gifEncoder = new GIF({
+                workers: 2, // Use multiple web workers for faster generation
+                quality: 10, // Lower quality = smaller file, faster generation
+                delay: 1000 / fps, // Delay between frames based on FPS
+                width: projWidth, // Use the project's actual width
+                height: projHeight, // Use the project's actual height
+                background: '#ffffff' // Set a default background for the GIF
             });
 
-            for (let i = 0; i < frames.length; i++) {
+            // Add each frame to the GIF generator
+            for (let i = 0; i < framesData.length; i++) {
                 try {
-                    const img = await loadImage(frames[i]);
-                    gif.addFrame(img, { delay: 1000 / animationSpeed });
-                }
-                catch (error) {
-                    console.error(`Error loading frame ${i} for GIF export:`, error);
+                    const frameImage = await loadImage(framesData[i]);
+
+                    // Create a temporary canvas to draw each frame at the correct project dimensions
+                    const tempCanvas = document.createElement('canvas');
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCanvas.width = projWidth;
+                    tempCanvas.height = projHeight;
+                    tempCtx.imageSmoothingEnabled = true; // Ensure smooth lines for export
+
+                    tempCtx.fillStyle = '#ffffff'; // Fill with white background
+                    tempCtx.fillRect(0, 0, projWidth, projHeight);
+                    tempCtx.drawImage(frameImage, 0, 0, projWidth, projHeight);
+
+                    // Add the frame from the temporary canvas
+                    gifEncoder.addFrame(tempCtx, { copy: true, delay: 1000 / fps });
+                } catch (error) {
+                    console.error(`Problem loading frame ${i} for GIF export:`, error);
                 }
             }
 
-            gif.on('progress', function(p) {
-                exportProgress = Math.floor(p * 100);
-                exportGifBtn.textContent = `Exporting GIF... ${exportProgress}%`;
+            // Listen for progress updates
+            gifEncoder.on('progress', function(p) {
+                exportProg = Math.floor(p * 100);
+                exportGifBtn.textContent = `Exporting GIF... ${exportProg}%`;
             });
 
-            gif.on('finished', function(blob) {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'animation.gif';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+            // Handle successful GIF generation
+            gifEncoder.on('finished', function(blob) {
+                const url = URL.createObjectURL(blob); // Create a URL for the generated GIF
+                const dlLink = document.createElement('a');
+                dlLink.href = url;
+                dlLink.download = 'animation.gif'; // Suggest a filename
+                document.body.appendChild(dlLink);
+                dlLink.click(); // Programmatically click to trigger download
+                document.body.removeChild(dlLink);
+                URL.revokeObjectURL(url); // Clean up the object URL
 
-                isExporting = false;
-                exportProgress = 0;
+                exporting = false;
+                exportProg = 0;
+                exportGifBtn.textContent = '🖼️ Export GIF'; // Reset button text
+                exportGifBtn.disabled = false; // Re-enable button
+                showUserMessage('GIF exported successfully!');
+            });
+
+            // Handle errors during GIF generation
+            gifEncoder.on('error', function(error) {
+                console.error('GIF generation failed:', error);
+                exporting = false;
+                exportProg = 0;
                 exportGifBtn.textContent = '🖼️ Export GIF';
                 exportGifBtn.disabled = false;
-                showMessage('GIF exported successfully!');
+                showUserMessage('Error exporting GIF.');
             });
 
-            gif.on('error', function(error) {
-                console.error('GIF generation error:', error);
-                isExporting = false;
-                exportProgress = 0;
-                exportGifBtn.textContent = '🖼️ Export GIF';
-                exportGifBtn.disabled = false;
-                showMessage('Error exporting GIF.');
-            });
-
-            gif.render();
+            gifEncoder.render(); // Start the GIF rendering process
         }
 
+        /**
+         * Generates a creative drawing idea using the Gemini API.
+         */
         async function generateFrameIdea() {
-            const prompt = ideaPromptInput.value.trim();
-            if (!prompt) {
-                showMessage('Please enter a prompt for the idea generator.');
+            const ideaPromptText = ideaPromptInput.value.trim();
+            if (!ideaPromptText) {
+                showUserMessage('Please type in a little prompt for the idea generator first!');
                 return;
             }
 
+            // Disable UI elements and show loading state
             getIdeaBtn.disabled = true;
             ideaPromptInput.disabled = true;
             getIdeaBtn.textContent = 'Generating...';
-            generatedIdeaOutput.classList.add('hidden');
-            ideaText.textContent = '';
+            generatedIdeaOutput.classList.add('hidden'); // Hide previous output
+            ideaText.textContent = ''; // Clear previous idea
 
             try {
+                // Prepare chat history for the API call
                 let chatHistory = [];
-                chatHistory.push({ role: "user", parts: [{ text: `Generate a creative drawing idea for an animation frame based on this prompt: "${prompt}". Keep it concise and focused on visual elements."` }] });
+                chatHistory.push({ role: "user", parts: [{ text: `Generate a creative drawing idea for an animation frame based on this prompt: "${ideaPromptText}". Keep it concise and focused on visual elements."` }] });
                 const payload = { contents: chatHistory };
-                const apiKey = ""; // Replace with your actual Gemini API Key
+                const apiKey = ""; // This will be provided by the Canvas environment
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
+                // Make the API call
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1168,226 +1488,274 @@
 
                 const result = await response.json();
 
+                // Process the API response
                 if (result.candidates && result.candidates.length > 0 &&
                     result.candidates[0].content && result.candidates[0].content.parts &&
                     result.candidates[0].content.parts.length > 0) {
-                    const text = result.candidates[0].content.parts[0].text;
-                    ideaText.textContent = text;
-                    generatedIdeaOutput.classList.remove('hidden');
-                    showMessage('Idea generated successfully!');
+                    const aiIdeaText = result.candidates[0].content.parts[0].text;
+                    ideaText.textContent = aiIdeaText; // Display the idea
+                    generatedIdeaOutput.classList.remove('hidden'); // Show the output area
+                    showUserMessage('Idea generated successfully!');
                 } else {
-                    ideaText.textContent = 'Could not generate an idea. Please try again.';
+                    ideaText.textContent = 'Couldn\'t quite generate an idea this time. Please try a different prompt!';
                     generatedIdeaOutput.classList.remove('hidden');
-                    showMessage('Error generating idea.');
+                    showUserMessage('Error generating idea.');
                 }
             } catch (error) {
                 console.error('Error calling Gemini API:', error);
-                ideaText.textContent = 'Failed to generate an idea due to an error.';
+                ideaText.textContent = 'Failed to generate an idea due to a network or API error.';
                 generatedIdeaOutput.classList.remove('hidden');
-                showMessage('Error generating idea.');
+                showUserMessage('Error generating idea.');
             } finally {
+                // Re-enable UI elements
                 getIdeaBtn.disabled = false;
                 ideaPromptInput.disabled = false;
                 getIdeaBtn.textContent = 'Get Idea';
             }
         }
 
-        function updateToolButtons() {
-            const allTools = [brushToolBtn, eraserToolBtn, fillToolBtn, eyedropperToolBtn, panToolBtn];
-            allTools.forEach(btn => {
+        /**
+         * Updates the visual state (highlighting) of the tool buttons.
+         */
+        function updateToolButtonStates() {
+            // Get all tool buttons
+            const allToolButtons = [pencilToolBtn, eraserToolBtn, fillToolBtn, eyedropperToolBtn, panToolBtn];
+            
+            // Reset all buttons to default gray style
+            allToolButtons.forEach(btn => {
                 btn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
                 btn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
             });
 
-            const currentToolBtn = document.getElementById(`${tool}Tool`);
-            if (currentToolBtn) {
-                currentToolBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-                currentToolBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
+            // Special handling: if any of the brush types are selected, the main pencil tool button should be highlighted
+            if (currentTool === 'brush' || currentTool === 'pen' || currentTool === 'pencil') {
+                pencilToolBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
+                pencilToolBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
+            } else {
+                // For other tools (eraser, fill, eyedropper, pan), highlight their specific button
+                const currentToolButton = document.getElementById(`${currentTool}Tool`);
+                if (currentToolButton) {
+                    currentToolButton.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
+                    currentToolButton.classList.add('bg-blue-600', 'text-white', 'shadow-md');
+                }
+            }
+
+            // Also update the buttons within the brush selection modal
+            const brushModalButtons = [selectBrushToolBtn, selectPenToolBtn, selectPencilToolBtn];
+            brushModalButtons.forEach(btn => {
+                btn.classList.remove('bg-blue-500', 'text-white');
+                btn.classList.add('bg-gray-200', 'text-gray-700');
+            });
+
+            // Highlight the currently selected brush type in the modal
+            if (currentTool === 'brush') {
+                selectBrushToolBtn.classList.remove('bg-gray-200', 'text-gray-700');
+                selectBrushToolBtn.classList.add('bg-blue-500', 'text-white');
+            } else if (currentTool === 'pen') {
+                selectPenToolBtn.classList.remove('bg-gray-200', 'text-gray-700');
+                selectPenToolBtn.classList.add('bg-blue-500', 'text-white');
+            } else if (currentTool === 'pencil') {
+                selectPencilToolBtn.classList.remove('bg-gray-200', 'text-gray-700');
+                selectPencilToolBtn.classList.add('bg-blue-500', 'text-white');
             }
         }
 
         /**
-         * Resizes the internal drawing buffer and ensures existing frames are redrawn
-         * without scaling their content, maintaining original line thickness.
-         * @param {number} newWidth The new width for the project.
-         * @param {number} newHeight The new height for the project.
+         * Resizes the project canvas and scales existing frames proportionally.
+         * @param {number} newWidth - The new width for the project canvas.
+         * @param {number} newHeight - The new height for the project canvas.
          */
         async function resizeDrawingBufferAndFrames(newWidth, newHeight) {
-            const oldFrames = [...frames]; // Copy current frames
-            const newFrames = [];
+            const oldFramesData = [...framesData]; // Take a copy of current frames
+            const newFramesData = [];
 
-            // Store old project dimensions to correctly draw existing content
-            const oldProjectWidth = PROJECT_WIDTH;
-            const oldProjectHeight = PROJECT_HEIGHT;
+            const oldProjWidth = projWidth;
+            const oldProjHeight = projHeight;
 
             // Update global project dimensions
-            PROJECT_WIDTH = newWidth;
-            PROJECT_HEIGHT = newHeight;
+            projWidth = newWidth;
+            projHeight = newHeight;
 
-            // Temporarily set drawing buffer to new dimensions
-            drawingBufferCanvas.width = newWidth;
-            drawingBufferCanvas.height = newHeight;
-            // Ensure smoothing is enabled after resize
-            drawingBufferContext.imageSmoothingEnabled = true;
+            // Resize the offscreen drawing buffer
+            bufferCanvas.width = newWidth;
+            bufferCanvas.height = newHeight;
+            bufferCtx.imageSmoothingEnabled = true; // Ensure smooth scaling
 
-            // Iterate through old frames, draw them onto the new buffer without scaling the content
-            for (let i = 0; i < oldFrames.length; i++) {
-                const frameData = oldFrames[i];
-                // Create a temporary canvas for processing each frame
-                const tempFrameCanvas = document.createElement('canvas');
-                const tempFrameContext = tempFrameCanvas.getContext('2d');
-                tempFrameCanvas.width = newWidth;
-                tempFrameCanvas.height = newHeight;
-                tempFrameContext.imageSmoothingEnabled = true; // Ensure smoothing for temp context
+            // Iterate through all old frames and redraw them onto new dimensions
+            for (let i = 0; i < oldFramesData.length; i++) {
+                const frameData = oldFramesData[i];
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCanvas.width = newWidth;
+                tempCanvas.height = newHeight;
+                tempCtx.imageSmoothingEnabled = true;
 
-                // Fill with white background for the new frame
-                tempFrameContext.fillStyle = '#ffffff';
-                tempFrameContext.fillRect(0, 0, newWidth, newHeight);
+                tempCtx.fillStyle = '#ffffff'; // Fill with white background
+                tempCtx.fillRect(0, 0, newWidth, newHeight);
 
                 if (frameData && frameData.startsWith('data:image/png;base64,')) {
                     try {
                         const img = await loadImage(frameData);
-                        // Calculate centering offsets for the OLD image onto the NEW canvas
-                        // This will keep the original drawing at its original pixel size
-                        const offsetX = (newWidth - oldProjectWidth) / 2;
-                        const offsetY = (newHeight - oldProjectHeight) / 2;
+                        // Calculate offset to center the old drawing within the new canvas
+                        const offsetX = (newWidth - oldProjWidth) / 2;
+                        const offsetY = (newHeight - oldProjHeight) / 2;
 
-                        // Draw the original image onto the new canvas at its original dimensions
-                        // It will be centered, and if the new canvas is smaller, it will be clipped.
-                        tempFrameContext.drawImage(img, offsetX, offsetY, oldProjectWidth, oldProjectHeight);
+                        // Draw the old frame onto the new size
+                        tempCtx.drawImage(img, offsetX, offsetY, oldProjWidth, oldProjHeight);
                     } catch (error) {
-                        console.error("Error scaling frame during resize:", error);
-                        // If image fails, the frame remains white (already filled)
+                        console.error("Trouble scaling frame during resize:", error);
                     }
                 }
-                newFrames.push(tempFrameCanvas.toDataURL('image/png'));
+                newFramesData.push(tempCanvas.toDataURL('image/png')); // Add scaled frame to new sequence
             }
             
-            frames = newFrames; // Update global frames array
+            framesData = newFramesData; // Replace old frames with new scaled ones
 
-            // Ensure current frame is loaded into buffer and canvas is rendered
-            await loadFrameIntoBuffer(frames[currentFrameIndex]);
-            renderCanvasContent();
-            updateTimeline();
-            saveState(); // Save this new state to history
-            showMessage(`Canvas resized to ${newWidth}x${newHeight}!`);
+            // Load and render the active frame with new dimensions
+            await loadFrameIntoBuffer(framesData[currentFrameIdx]);
+            renderCanvasDisplay();
+            updateTimelineDisplay();
+            saveStateToHistory(); // Record this canvas resize for undo/redo
+            showUserMessage(`Canvas successfully resized to ${newWidth}x${newHeight}!`);
         }
 
+        /**
+         * Initializes the editor when the window loads.
+         */
         window.onload = async function() {
-            // Initialize PROJECT_WIDTH and PROJECT_HEIGHT from localStorage or default
-            PROJECT_WIDTH = parseInt(localStorage.getItem('projectWidth')) || 800;
-            PROJECT_HEIGHT = parseInt(localStorage.getItem('projectHeight')) || 600;
-            projectWidthInput.value = PROJECT_WIDTH;
-            projectHeightInput.value = PROJECT_HEIGHT;
+            // Load saved project dimensions or use defaults
+            projWidth = parseInt(localStorage.getItem('projectWidth')) || 800;
+            projHeight = parseInt(localStorage.getItem('projectHeight')) || 600;
+            projectWidthInput.value = projWidth;
+            projectHeightInput.value = projHeight;
 
-            // Set drawing buffer dimensions to fixed project size
-            drawingBufferCanvas.width = PROJECT_WIDTH;
-            drawingBufferCanvas.height = PROJECT_HEIGHT;
+            // Set the offscreen buffer dimensions
+            bufferCanvas.width = projWidth;
+            bufferCanvas.height = projHeight;
 
-            // Explicitly enable image smoothing for both contexts
-            context.imageSmoothingEnabled = true;
-            drawingBufferContext.imageSmoothingEnabled = true;
+            // Enable image smoothing for both contexts for better drawing quality
+            mainCtx.imageSmoothingEnabled = true;
+            bufferCtx.imageSmoothingEnabled = true;
 
-            // Initialize drawing buffer context properties
-            drawingBufferContext.lineCap = 'round';
-            drawingBufferContext.lineJoin = 'round';
-            drawingBufferContext.strokeStyle = brushColor;
-            drawingBufferContext.lineWidth = brushSize;
+            // Set initial drawing styles for the offscreen buffer
+            bufferCtx.lineCap = 'round';
+            bufferCtx.lineJoin = 'round';
+            bufferCtx.strokeStyle = brushColor;
+            bufferCtx.lineWidth = brushSize;
             
-            // Ensure the drawing buffer is initialized with a white background
-            drawingBufferContext.fillStyle = '#ffffff';
-            drawingBufferContext.fillRect(0, 0, drawingBufferCanvas.width, drawingBufferCanvas.height);
+            // Fill the offscreen buffer with white initially
+            bufferCtx.fillStyle = '#ffffff';
+            bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
 
-            // Set visible canvas dimensions based on its container
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
+            // Set the display canvas dimensions to match its CSS size
+            mainCanvas.width = mainCanvas.offsetWidth;
+            mainCanvas.height = mainCanvas.offsetHeight;
 
 
-            if (frames.length === 0) {
-                const initialCanvasData = drawingBufferCanvas.toDataURL('image/png');
-                frames.push(initialCanvasData);
-                saveState();
+            // If no frames exist, create an initial blank one
+            if (framesData.length === 0) {
+                const initialCanvasData = bufferCanvas.toDataURL('image/png');
+                framesData.push(initialCanvasData);
+                saveStateToHistory(); // Save this initial state
             }
             
-            await loadFrameIntoBuffer(frames[currentFrameIndex]);
-            renderCanvasContent();
+            // Load the current active frame and render it
+            await loadFrameIntoBuffer(framesData[currentFrameIdx]);
+            renderCanvasDisplay();
             
-            updateTimeline();
-            updateToolButtons();
+            // Update UI elements
+            updateTimelineDisplay();
+            updateToolButtonStates();
             updateUndoRedoButtons();
 
+            // Set initial button states for playback and export
             playBtn.disabled = false;
             pauseBtn.disabled = true;
             stopBtn.disabled = true;
             exportGifBtn.disabled = false;
 
-            brushToolBtn.addEventListener('click', () => {
-                tool = 'brush';
-                updateToolButtons();
-            });
-            eraserToolBtn.addEventListener('click', () => {
-                tool = 'eraser';
-                updateToolButtons();
-            });
-            fillToolBtn.addEventListener('click', () => {
-                tool = 'fill';
-                updateToolButtons();
-            });
-            eyedropperToolBtn.addEventListener('click', () => {
-                tool = 'eyedropper';
-                updateToolButtons();
-            });
-            panToolBtn.addEventListener('click', () => {
-                tool = 'pan';
-                updateToolButtons();
+            /* --- Event Listeners Setup --- */
+
+            // Double-click on pencil tool to open brush selection modal
+            pencilToolBtn.addEventListener('dblclick', () => {
+                brushSelectionModal.classList.remove('hidden');
+                updateToolButtonStates(); // Ensure modal buttons are highlighted correctly on open
             });
 
+            // Tool selection click handlers
+            eraserToolBtn.addEventListener('click', () => {
+                currentTool = 'eraser';
+                updateToolButtonStates();
+            });
+            fillToolBtn.addEventListener('click', () => {
+                currentTool = 'fill';
+                updateToolButtonStates();
+            });
+            eyedropperToolBtn.addEventListener('click', () => {
+                currentTool = 'eyedropper';
+                updateToolButtonStates();
+            });
+            panToolBtn.addEventListener('click', () => {
+                currentTool = 'pan';
+                updateToolButtonStates();
+            });
+
+            // Palm rejection toggle handler
             stylusOnlyModeToggle.addEventListener('change', (e) => {
                 isStylusOnlyModeEnabled = e.target.checked;
             });
 
+            // Brush color input handler
             brushColorInput.addEventListener('input', (e) => {
                 brushColor = e.target.value;
-                drawingBufferContext.strokeStyle = brushColor;
+                bufferCtx.strokeStyle = brushColor; // Update drawing color
             });
 
+            // Brush size slider handler
             brushSizeInput.addEventListener('input', (e) => {
                 brushSize = parseInt(e.target.value);
-                brushSizeValueSpan.textContent = `${brushSize}px`;
-                drawingBufferContext.lineWidth = brushSize;
+                brushSizeValueSpan.textContent = `${brushSize}px`; // Update display value
+                bufferCtx.lineWidth = brushSize; // Update drawing thickness
             });
 
-            canvas.addEventListener('mousedown', startDrawing);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', stopDrawing);
-            canvas.addEventListener('mouseleave', stopDrawing);
+            // Drawing/Interaction event listeners for the main canvas
+            mainCanvas.addEventListener('mousedown', handleInteractionStart);
+            mainCanvas.addEventListener('mousemove', handleInteractionMove);
+            mainCanvas.addEventListener('mouseup', handleInteractionEnd);
+            mainCanvas.addEventListener('mouseleave', handleInteractionEnd); // Stop drawing if mouse leaves
 
-            canvas.addEventListener('touchstart', startDrawing);
-            canvas.addEventListener('touchmove', draw);
-            canvas.addEventListener('touchend', stopDrawing);
-            canvas.addEventListener('touchcancel', stopDrawing);
+            // Touch event listeners for mobile/tablet drawing
+            mainCanvas.addEventListener('touchstart', handleInteractionStart);
+            mainCanvas.addEventListener('touchmove', handleInteractionMove);
+            mainCanvas.addEventListener('touchend', handleInteractionEnd);
+            mainCanvas.addEventListener('touchcancel', handleInteractionEnd); // Handle interrupted touches
 
+            // Frame management button handlers
             addFrameBtn.addEventListener('click', addFrame);
             deleteFrameBtn.addEventListener('click', deleteFrame);
             duplicateFrameBtn.addEventListener('click', duplicateFrame);
             clearCurrentFrameBtn.addEventListener('click', clearCurrentFrame);
 
+            // Project save/load/export handlers
             saveProjectBtn.addEventListener('click', saveProject);
             loadProjectBtn.addEventListener('click', loadProject);
-            exportGifBtn.addEventListener('click', exportGif);
+            exportGifBtn.addEventListener('click', exportGifAnimation);
 
-            playBtn.addEventListener('click', playAnimation);
-            pauseBtn.addEventListener('click', pauseAnimation);
-            stopBtn.addEventListener('click', stopAnimation);
-            animationSpeedInput.addEventListener('input', (e) => {
-                animationSpeed = parseInt(e.target.value);
-                animationSpeedValueSpan.textContent = animationSpeed;
-                if (isPlaying) {
-                    pauseAnimation();
-                    playAnimation();
+            // Animation playback button handlers
+            playBtn.addEventListener('click', startAnimationPlayback);
+            pauseBtn.addEventListener('click', pauseAnimationPlayback);
+            stopBtn.addEventListener('click', stopAnimationPlayback);
+            animSpeedInput.addEventListener('input', (e) => {
+                fps = parseInt(e.target.value);
+                animSpeedValueSpan.textContent = fps; // Update display value
+                if (animPlaying) {
+                    // If animation is playing, restart it with the new speed
+                    pauseAnimationPlayback();
+                    startAnimationPlayback();
                 }
             });
 
+            // Idea generation modal handlers
             generateIdeaBtn.addEventListener('click', () => {
                 ideaModal.classList.remove('hidden');
                 generatedIdeaOutput.classList.add('hidden');
@@ -1399,6 +1767,7 @@
             });
             getIdeaBtn.addEventListener('click', generateFrameIdea);
 
+            // Help modal handlers
             helpBtn.addEventListener('click', () => {
                 helpModal.classList.remove('hidden');
             });
@@ -1406,11 +1775,12 @@
                 helpModal.classList.add('hidden');
             });
 
-            // New FAQ button event listener
+            // FAQ button links to external help page
             faqBtn.addEventListener('click', () => {
                 window.open('https://sathvik-harish.github.io/ToonStart-Help/', '_blank');
             });
 
+            // Palm rejection help modal handlers
             palmRejectionHelpIcon.addEventListener('click', () => {
                 palmRejectionHelpModal.classList.remove('hidden');
             });
@@ -1418,6 +1788,7 @@
                 palmRejectionHelpModal.classList.add('hidden');
             });
 
+            // Updates modal handlers
             updatesBtn.addEventListener('click', () => {
                 updatesModal.classList.remove('hidden');
             });
@@ -1425,6 +1796,7 @@
                 updatesModal.classList.add('hidden');
             });
 
+            // Customize modal handlers
             customizeBtn.addEventListener('click', () => {
                 customizeModal.classList.remove('hidden');
             });
@@ -1432,44 +1804,73 @@
                 customizeModal.classList.add('hidden');
             });
 
+            // Apply custom canvas size from modal
             applyCanvasSizeBtn.addEventListener('click', () => {
                 const newWidth = parseInt(projectWidthInput.value, 10);
                 const newHeight = parseInt(projectHeightInput.value, 10);
+                // Basic validation for dimensions
                 if (isNaN(newWidth) || newWidth < 100 || newWidth > 2000 || isNaN(newHeight) || newHeight < 100 || newHeight > 1500) {
-                    showMessage('Please enter valid dimensions (Width: 100-2000, Height: 100-1500).');
+                    showUserMessage('Please enter valid dimensions (Width: 100-2000px, Height: 100-1500px).');
                     return;
                 }
                 resizeDrawingBufferAndFrames(newWidth, newHeight);
-                showMessage(`Canvas size set to ${newWidth}x${newHeight}.`);
+                showUserMessage(`Canvas size set to ${newWidth}x${newHeight}.`);
             });
 
+            // Reset canvas size to default
             resetCanvasSizeBtn.addEventListener('click', () => {
                 projectWidthInput.value = 800;
                 projectHeightInput.value = 600;
                 resizeDrawingBufferAndFrames(800, 600);
-                showMessage('Canvas size reset to default (800x600).');
+                showUserMessage('Canvas size reset to default (800x600).');
             });
 
-            undoBtn.addEventListener('click', undo);
-            redoBtn.addEventListener('click', redo);
+            // Undo/Redo button handlers
+            undoBtn.addEventListener('click', performUndo);
+            redoBtn.addEventListener('click', performRedo);
 
+            // Brush selection modal button handlers
+            selectBrushToolBtn.addEventListener('click', () => {
+                currentTool = 'brush';
+                updateToolButtonStates();
+                brushSelectionModal.classList.add('hidden'); // Hide modal after selection
+            });
+            selectPenToolBtn.addEventListener('click', () => {
+                currentTool = 'pen';
+                updateToolButtonStates();
+                brushSelectionModal.classList.add('hidden');
+            });
+            selectPencilToolBtn.addEventListener('click', () => {
+                currentTool = 'pencil';
+                updateToolButtonStates();
+                brushSelectionModal.classList.add('hidden');
+            });
+            closeBrushSelectionModalBtn.addEventListener('click', () => {
+                brushSelectionModal.classList.add('hidden');
+            });
+
+
+            // Handle window resizing to make the main canvas responsive
             window.addEventListener('resize', () => {
-                const currentFrameData = drawingBufferCanvas.toDataURL('image/png');
+                // Save current frame data temporarily before resizing
+                const currentFrameData = bufferCanvas.toDataURL('image/png');
                 
-                canvas.width = canvas.offsetWidth;
-                canvas.height = canvas.offsetHeight;
+                // Update main canvas dimensions to match its current CSS size
+                mainCanvas.width = mainCanvas.offsetWidth;
+                mainCanvas.height = mainCanvas.offsetHeight;
 
-                // Ensure smoothing is enabled after resize on display canvas
-                context.imageSmoothingEnabled = true;
+                // Re-enable image smoothing (can sometimes be reset on resize)
+                mainCtx.imageSmoothingEnabled = true;
 
+                // Load the saved frame data back into the buffer and re-render
                 loadFrameIntoBuffer(currentFrameData).then(() => {
-                    // These properties are set in startDrawing now, but good to have fallback
-                    drawingBufferContext.lineCap = 'round';
-                    drawingBufferContext.lineJoin = 'round';
-                    drawingBufferContext.strokeStyle = brushColor;
-                    drawingBufferContext.lineWidth = brushSize;
+                    // Re-apply drawing styles as they might be lost on context resize
+                    bufferCtx.lineCap = 'round';
+                    bufferCtx.lineJoin = 'round';
+                    bufferCtx.strokeStyle = brushColor;
+                    bufferCtx.lineWidth = brushSize;
                     
-                    renderCanvasContent();
+                    renderCanvasDisplay(); // Render the updated display
                 });
             });
         };
