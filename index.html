@@ -424,6 +424,7 @@
             </div>
             <button id="closeHelpModalBtn" class="mt-6 w-full bg-gray-300 text-gray-800 px-4 py-3 rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-200 flex-shrink-0">
                 Close
+
             </button>
         </div>
     </div>
@@ -456,7 +457,6 @@
                         <li><strong>Backgrounds:</strong> Added a new "Background" section in the toolbox.
                             <ul>
                                 <li>Upload custom background images.</li>
-                                <li>Choose from 5 pre-built background images.</li>
                                 <li>Clear the current background.</li>
                                 <li>Backgrounds are fixed and do not move with the pan or lasso tools.</li>
                                 <li>Background images automatically fit to the canvas size.</li>
@@ -826,6 +826,24 @@
         </div>
     </div>
 
+    <!-- Mobile App Prompt Modal -->
+    <div id="mobileAppPromptModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm text-center">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">👋 You're on mobile!</h3>
+            <p class="text-gray-700 mb-6">
+                Do you want to download the ToonStart app for a better experience?
+            </p>
+            <div class="flex flex-col space-y-4">
+                <button id="continueWebBtn" class="bg-blue-600 text-white px-4 py-3 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200">
+                    Continue on Web
+                </button>
+                <button id="downloadAppBtn" class="bg-green-600 text-white px-4 py-3 rounded-lg shadow-md hover:bg-green-700 transition-colors duration-200">
+                    Download App
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const mainCanvas = document.getElementById('drawingCanvas');
         const mainCtx = mainCanvas.getContext('2d');
@@ -913,7 +931,7 @@
 
         const brushSelectionModal = document.getElementById('brushSelectionModal');
         const selectBrushToolBtn = document.getElementById('selectBrushTool');
-        const selectPenToolBtn = document.getElementById('selectPenTool');
+        const selectPenToolBtn = document = document.getElementById('selectPenTool');
         const selectPencilToolBtn = document.getElementById('selectPencilTool');
         const selectWatercolorToolBtn = document.getElementById('selectWatercolorTool');
         const closeBrushSelectionModalBtn = document.getElementById('closeBrushSelectionModalBtn');
@@ -938,6 +956,12 @@
         const stickerSelectionModal = document.getElementById('stickerSelectionModal');
         const stickerContainer = document.getElementById('stickerContainer');
         const closeStickerSelectionModalBtn = document.getElementById('closeStickerSelectionModalBtn');
+
+        // Mobile App Prompt elements
+        const mobileAppPromptModal = document.getElementById('mobileAppPromptModal');
+        const continueWebBtn = document.getElementById('continueWebBtn');
+        const downloadAppBtn = document.getElementById('downloadAppBtn');
+
 
         let drawingActive = false;
         let brushColor = '#000000';
@@ -985,7 +1009,7 @@
 
         const availableStickers = [
             { emoji: '😀', size: 50 }, { emoji: '😂', size: 50 }, { emoji: '😍', size: 50 },
-            { emoji: '🤩', size: 50 }, { emoji: '🥳', size: 50 }, { emoji: '😇', size: 50 },
+            { emoji: '�', size: 50 }, { emoji: '🥳', size: 50 }, { emoji: '😇', size: 50 },
             { emoji: '😎', size: 50 }, { emoji: '🤓', size: 50 }, { emoji: '🤔', size: 50 },
             { emoji: '😏', size: 50 }, { emoji: '🥺', size: 50 }, { emoji: '🤯', size: 50 },
             { emoji: '👍', size: 50 }, { emoji: '❤️', size: 50 }, { emoji: '🌟', size: 50 },
@@ -995,7 +1019,7 @@
             { emoji: '🐶', size: 50 }, { emoji: '🐼', size: 50 }, { emoji: '🍎', size: 50 },
             { emoji: '🍕', size: 50 }, { emoji: '☕', size: 50 }, { emoji: '🎈', size: 50 },
             { emoji: '🌸', size: 50 }, { emoji: '🌼', size: 50 }, { emoji: '🌻', size: 50 },
-            { emoji: '🍀', size: 50 }, { emoji: '🍄', size: 50 }, { emoji: '🍂', size: 50 }, // Fixed: Added 'size:'
+            { emoji: '🍀', size: 50 }, { emoji: '🍄', size: 50 }, { emoji: '🍂', size: 50 },
             { emoji: '🍁', size: 50 }, { emoji: '❄️', size: 50 }, { emoji: '☀️', size: 50 },
             { emoji: '⚡', size: 50 }, { emoji: '☁️', size: 50 }, { emoji: '☔', size: 50 },
             { emoji: '🌙', size: 50 }, { emoji: '🌍', size: 50 }, { emoji: '🌊', size: 50 },
@@ -1031,7 +1055,7 @@
             { emoji: '🚇', size: 50 }, { emoji: '🚈', size: 50 }, { emoji: '🚉', size: 50 },
             { emoji: '🚊', size: 50 }, { emoji: '🚃', size: 50 }, { emoji: '🚋', size: 50 },
             { emoji: '🚄', size: 50 }, { emoji: '🚅', size: 50 }, { emoji: '🚂', size: 50 },
-            { emoji: '�', size: 50 }, { emoji: '🚇', size: 50 }, { emoji: '🚈', size: 50 },
+            { emoji: '🚆', size: 50 }, { emoji: '🚇', size: 50 }, { emoji: '🚈', size: 50 },
             { emoji: '🚉', size: 50 }, { emoji: '🚊', size: 50 }, { emoji: '🚃', size: 50 },
             { emoji: '🚋', size: 50 }, { emoji: '🚝', size: 50 }, { emoji: '🚞', size: 50 },
             { emoji: '🚟', size: 50 }, { emoji: '🚠', size: 50 }, { emoji: '🚡', size: 50 },
@@ -2204,7 +2228,43 @@
             // No longer needed to update pre-built buttons as they are removed
         }
 
+        /**
+         * Checks if the device is likely a mobile device based on screen width and user agent.
+         * @returns {boolean} True if likely a mobile device, false otherwise.
+         */
+        function isMobileDevice() {
+            const screenWidth = window.innerWidth;
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+            // Factor 1: Screen size (common breakpoint for mobile devices)
+            const isSmallScreen = screenWidth < 768; // Adjust threshold as needed
+
+            // Factor 2: User Agent String for common mobile OS/browsers
+            const isMobileUA = /(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|rim)|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(userAgent) || /1207|6310|6590|3gso|4thc|501i|503i|504i|505i|506i|6270|7060|7290|7370|7420|7430|8300|8101|8102|8150|8170|8180|8190|9003|9025|9590|sync|alcatel|amoi|android|aptu|aurora|ašenas|avaya|blackberry|benq|brvm|cdm-|cellpad|cingular|cmc-|cldc-|cmd-|coool|cybo|daco|dhp|dmob|do(c|t)|ebmco|ercu|eudoraweb|fly|fennec|htc|iemobile|ibook|kddi|kgt|kinhin|kpt |kwc-|kyo(c|k)|le(no|xi)|lg( g5|b0|ke|pn|si)|lenovo|maemo|midp|mobi|mozilla|netfront|nestscape|nitro|nokia|palm|pana|pantone|philips|phone|pg(0|x)|pda|plucker|pocket|psp|qtek|qwap|sagem|sams(atc|us)|sgh-|shar|sie-|siemens|softbank|sony|spa|tcl-|tdg-|tel(i|m)|tim-|t-mobile|toplc|ts(v|w)|user|vodafone|wap|wonu|xda|xyzzy|zte/i.test(userAgent.substr(0, 4));
+
+            // Combine both factors
+            return isSmallScreen || isMobileUA;
+        }
+
         window.onload = async function() {
+            // Check if mobile prompt has already been shown in this session
+            if (!sessionStorage.getItem('mobileAppPromptShown')) {
+                if (isMobileDevice()) {
+                    mobileAppPromptModal.classList.remove('hidden');
+                    // Store that the prompt has been shown to avoid repeated display in the same session
+                    sessionStorage.setItem('mobileAppPromptShown', 'true');
+                }
+            }
+
+            // Event Listeners for the mobile app prompt modal
+            continueWebBtn.addEventListener('click', () => {
+                mobileAppPromptModal.classList.add('hidden');
+            });
+
+            downloadAppBtn.addEventListener('click', () => {
+                window.location.href = 'https://median.co/share/pkbqrw#apk';
+            });
+
             projWidth = parseInt(localStorage.getItem('projectWidth')) || 800;
             projHeight = parseInt(localStorage.getItem('projectHeight')) || 600;
             projectWidthInput.value = projWidth;
