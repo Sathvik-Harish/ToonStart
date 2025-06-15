@@ -201,15 +201,41 @@
             transform: translateY(0);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+        /* Styles for small square Undo/Redo buttons */
+        .history-button-small {
+            width: 2rem; /* 32px */
+            height: 2rem; /* 32px */
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 0.375rem; /* rounded-md */
+            font-size: 1rem; /* Adjust emoji size */
+            line-height: 1;
+            background-color: #e2e8f0; /* gray-200 */
+            color: #4b5563; /* gray-700 */
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+            transition: background-color 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .history-button-small:hover {
+            background-color: #cbd5e0; /* gray-300 */
+        }
+        .history-button-small:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body class="h-screen bg-gray-100 flex flex-col items-center p-4 sm:p-6 md:p-8">
 
-    <h1 class="text-4xl sm:text-5xl font-extrabold text-blue-800 mb-4 text-center">
-        ToonStart Animation Editor <span class="text-xs font-normal align-top ml-2 text-gray-600">S.H. - S.S.</span>
-    </h1>
-
     <div id="messageDisplay" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md transition-opacity duration-500 opacity-0 z-1000 hidden"></div>
+
+    <!-- Undo/Redo buttons moved to top-right -->
+    <div class="fixed top-4 right-4 z-50 flex space-x-2">
+        <button id="undoBtn" class="history-button-small">↩️</button>
+        <button id="redoBtn" class="history-button-small">↪️</button>
+    </div>
 
     <div class="flex w-full max-w-6xl bg-white rounded-xl shadow-lg overflow-hidden flex-grow flex-grow-container">
         <div id="staticToolbox">
@@ -276,6 +302,8 @@
                     </div>
                 </div>
 
+                <!-- History section removed as buttons are moved -->
+                <!--
                 <div class="toolbox-section">
                     <h2>History</h2>
                     <div class="flex flex-col space-y-1">
@@ -283,6 +311,7 @@
                         <button id="redoBtn" class="bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-400 text-sm" disabled>↪️ Redo</button>
                     </div>
                 </div>
+                -->
 
                 <div class="toolbox-section">
                     <h2>Project</h2>
@@ -993,6 +1022,10 @@
         // New in-app install button
         const installAppInAppBtn = document.getElementById('installAppInAppBtn');
 
+        // Undo/Redo buttons (now global, not in toolbox)
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+
 
         let drawingActive = false;
         let brushColor = '#000000';
@@ -1038,11 +1071,16 @@
         let awaitingStickerPlacement = false;
         let stickerToPlace = null;
 
+        // For mobile tap gestures
+        let lastTapTime = 0;
+        let tapCount = 0;
+        const TAP_TIMEOUT = 300; // ms to detect multiple taps
+
         const availableStickers = [
             { emoji: '😀', size: 50 }, { emoji: '😂', size: 50 }, { emoji: '😍', size: 50 },
             { emoji: '🤩', size: 50 }, { emoji: '🥳', size: 50 }, { emoji: '😇', size: 50 },
             { emoji: '😎', size: 50 }, { emoji: '🤓', size: 50 }, { emoji: '🤔', size: 50 },
-            { emoji: '😏', size: 50 }, { emoji: '🥺', size: 50 }, { emoji: '�', size: 50 },
+            { emoji: '😏', size: 50 }, { emoji: '🥺', size: 50 }, { emoji: '🤯', size: 50 },
             { emoji: '👍', size: 50 }, { emoji: '❤️', size: 50 }, { emoji: '🌟', size: 50 },
             { emoji: '🌈', size: 50 }, { emoji: '🚀', size: 50 }, { emoji: '💡', size: 50 },
             { emoji: '🎉', size: 50 }, { emoji: '🔥', size: 50 }, { emoji: '💯', size: 50 },
@@ -1067,7 +1105,7 @@
             { emoji: '🍳', size: 50 }, { emoji: '🥓', size: 50 }, { emoji: '🍔', size: 50 },
             { emoji: '🍟', size: 50 }, { emoji: '🌭', size: 50 }, { emoji: '🥪', size: 50 },
             { emoji: '🌮', size: 50 }, { emoji: '🌯', size: 50 }, { emoji: '🥙', size: 50 },
-            { emoji: '🍦', size: 50 }, { emoji: '🍩', size: 50 }, { emoji: '🍪', size: 50 },
+            { emoji: '�', size: 50 }, { emoji: '🍩', size: 50 }, { emoji: '🍪', size: 50 },
             { emoji: '🎂', size: 50 }, { emoji: '🍰', size: 50 }, { emoji: '🧁', size: 50 },
             { emoji: '🥧', size: 50 }, { emoji: '🍫', size: 50 }, { emoji: '🍬', size: 50 },
             { emoji: '🍭', size: 50 }, { emoji: '🍮', size: 50 }, { emoji: '🍯', size: 50 },
@@ -1496,6 +1534,34 @@
             if (awaitingTextPlacement || awaitingStickerPlacement) {
                 return;
             }
+
+            // Tap gesture detection for mobile only
+            if (e.touches && e.touches.length > 0 && !drawingActive && !panningActive) {
+                const currentTime = new Date().getTime();
+                const tapInterval = currentTime - lastTapTime;
+
+                if (tapInterval < TAP_TIMEOUT && tapInterval > 0) { // Check for consecutive taps
+                    tapCount++;
+                } else {
+                    tapCount = 1; // Start new tap count
+                }
+                lastTapTime = currentTime;
+
+                if (tapCount === 2) {
+                    // Double tap for Undo
+                    setTimeout(() => { // Small delay to allow for triple tap detection
+                        if (tapCount === 2) { // Confirm it's still 2 taps after delay
+                            performUndo();
+                            tapCount = 0; // Reset after action
+                        }
+                    }, TAP_TIMEOUT);
+                } else if (tapCount === 3) {
+                    // Triple tap for Redo
+                    performRedo();
+                    tapCount = 0; // Reset after action
+                }
+            }
+
 
             if (currentTool === 'lasso') {
                 if (isLassoing) {
@@ -2734,3 +2800,4 @@
     </script>
 </body>
 </html>
+�
