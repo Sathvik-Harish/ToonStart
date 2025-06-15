@@ -178,6 +178,29 @@
         .bg-upload-button:hover {
             background-color: #3b82f6;
         }
+        /* New button for in-app install */
+        #installAppInAppBtn {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            background-color: #10B981; /* Green-600 */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px; /* Fully rounded */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            z-index: 100;
+            display: none; /* Hidden by default */
+        }
+        #installAppInAppBtn:hover {
+            background-color: #059669; /* Green-700 */
+            transform: translateY(-2px);
+        }
+        #installAppInAppBtn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body class="h-screen bg-gray-100 flex flex-col items-center p-4 sm:p-6 md:p-8">
@@ -645,7 +668,7 @@
                     <h4 class="font-semibold text-lg text-blue-700">May 28, 2025 - Canvas Resizing & UI Refinements</h4>
                     <ul class="list-disc list-inside ml-4 text-sm">
                         <li><strong>Canvas Resizing:</strong> Added ability to change project width and height in Customize modal. Existing frames scale proportionally.</li>
-                        <li><strong>Customize Button Relocated:</strong> Moved to the "Project" section for better organization.</li>
+                        <li><strong>Customize Button Relocated:</b> Moved to the "Project" section for better organization.</li>
                         <li><strong>Onion Skinning Removed:</strong> Feature removed as per user request.</li>
                     </ul>
                 </div>
@@ -844,6 +867,11 @@
         </div>
     </div>
 
+    <!-- New floating button for in-app install -->
+    <button id="installAppInAppBtn" class="hidden">
+        Install ToonStart App
+    </button>
+
     <script>
         const mainCanvas = document.getElementById('drawingCanvas');
         const mainCtx = mainCanvas.getContext('2d');
@@ -931,7 +959,7 @@
 
         const brushSelectionModal = document.getElementById('brushSelectionModal');
         const selectBrushToolBtn = document.getElementById('selectBrushTool');
-        const selectPenToolBtn = document = document.getElementById('selectPenTool');
+        const selectPenToolBtn = document.getElementById('selectPenTool');
         const selectPencilToolBtn = document.getElementById('selectPencilTool');
         const selectWatercolorToolBtn = document.getElementById('selectWatercolorTool');
         const closeBrushSelectionModalBtn = document.getElementById('closeBrushSelectionModalBtn');
@@ -961,6 +989,9 @@
         const mobileAppPromptModal = document.getElementById('mobileAppPromptModal');
         const continueWebBtn = document.getElementById('continueWebBtn');
         const downloadAppBtn = document.getElementById('downloadAppBtn');
+
+        // New in-app install button
+        const installAppInAppBtn = document.getElementById('installAppInAppBtn');
 
 
         let drawingActive = false;
@@ -1009,9 +1040,9 @@
 
         const availableStickers = [
             { emoji: '😀', size: 50 }, { emoji: '😂', size: 50 }, { emoji: '😍', size: 50 },
-            { emoji: '�', size: 50 }, { emoji: '🥳', size: 50 }, { emoji: '😇', size: 50 },
+            { emoji: '🤩', size: 50 }, { emoji: '🥳', size: 50 }, { emoji: '😇', size: 50 },
             { emoji: '😎', size: 50 }, { emoji: '🤓', size: 50 }, { emoji: '🤔', size: 50 },
-            { emoji: '😏', size: 50 }, { emoji: '🥺', size: 50 }, { emoji: '🤯', size: 50 },
+            { emoji: '😏', size: 50 }, { emoji: '🥺', size: 50 }, { emoji: '�', size: 50 },
             { emoji: '👍', size: 50 }, { emoji: '❤️', size: 50 }, { emoji: '🌟', size: 50 },
             { emoji: '🌈', size: 50 }, { emoji: '🚀', size: 50 }, { emoji: '💡', size: 50 },
             { emoji: '🎉', size: 50 }, { emoji: '🔥', size: 50 }, { emoji: '💯', size: 50 },
@@ -2229,10 +2260,30 @@
         }
 
         /**
-         * Checks if the device is likely a mobile device based on screen width and user agent.
-         * @returns {boolean} True if likely a mobile device, false otherwise.
+         * Checks if the app is running inside a Median.co webview (Android/iOS app).
+         * Median typically adds "x-median" to the user agent string.
+         * @returns {boolean} True if running in Median app, false otherwise.
          */
-        function isMobileDevice() {
+        function isMedianApp() {
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            return /x-median|Median/.test(userAgent);
+        }
+
+        /**
+         * Checks if the device is an Android device based on user agent.
+         * @returns {boolean} True if Android, false otherwise.
+         */
+        function isAndroidDevice() {
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            return /android/i.test(userAgent);
+        }
+
+        /**
+         * Determines if the mobile app prompt should be shown.
+         * It considers screen size, user agent, if it's an Android device, and if it's already in the Median app.
+         * @returns {boolean} True if the mobile app prompt should be shown, false otherwise.
+         */
+        function shouldShowMobileAppPrompt() {
             const screenWidth = window.innerWidth;
             const userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
@@ -2241,20 +2292,26 @@
 
             // Factor 2: User Agent String for common mobile OS/browsers
             const isMobileUA = /(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|rim)|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(userAgent) || /1207|6310|6590|3gso|4thc|501i|503i|504i|505i|506i|6270|7060|7290|7370|7420|7430|8300|8101|8102|8150|8170|8180|8190|9003|9025|9590|sync|alcatel|amoi|android|aptu|aurora|ašenas|avaya|blackberry|benq|brvm|cdm-|cellpad|cingular|cmc-|cldc-|cmd-|coool|cybo|daco|dhp|dmob|do(c|t)|ebmco|ercu|eudoraweb|fly|fennec|htc|iemobile|ibook|kddi|kgt|kinhin|kpt |kwc-|kyo(c|k)|le(no|xi)|lg( g5|b0|ke|pn|si)|lenovo|maemo|midp|mobi|mozilla|netfront|nestscape|nitro|nokia|palm|pana|pantone|philips|phone|pg(0|x)|pda|plucker|pocket|psp|qtek|qwap|sagem|sams(atc|us)|sgh-|shar|sie-|siemens|softbank|sony|spa|tcl-|tdg-|tel(i|m)|tim-|t-mobile|toplc|ts(v|w)|user|vodafone|wap|wonu|xda|xyzzy|zte/i.test(userAgent.substr(0, 4));
-
-            // Combine both factors
-            return isSmallScreen || isMobileUA;
+            
+            // Show prompt if it's a small screen or mobile UA, AND it's an Android device, AND NOT the Median app.
+            return (isSmallScreen || isMobileUA) && isAndroidDevice() && !isMedianApp();
         }
 
         window.onload = async function() {
-            // Check if mobile prompt has already been shown in this session
-            if (!sessionStorage.getItem('mobileAppPromptShown')) {
-                if (isMobileDevice()) {
-                    mobileAppPromptModal.classList.remove('hidden');
-                    // Store that the prompt has been shown to avoid repeated display in the same session
-                    sessionStorage.setItem('mobileAppPromptShown', 'true');
-                }
+            // Check if mobile prompt has already been shown in this session AND if it should be shown
+            if (!sessionStorage.getItem('mobileAppPromptShown') && shouldShowMobileAppPrompt()) {
+                mobileAppPromptModal.classList.remove('hidden');
+                // Store that the prompt has been shown to avoid repeated display in the same session
+                sessionStorage.setItem('mobileAppPromptShown', 'true');
             }
+
+            // Show "Install App" button if running inside Median app
+            if (isMedianApp() && isAndroidDevice()) {
+                installAppInAppBtn.classList.remove('hidden');
+            } else {
+                installAppInAppBtn.classList.add('hidden');
+            }
+
 
             // Event Listeners for the mobile app prompt modal
             continueWebBtn.addEventListener('click', () => {
@@ -2264,6 +2321,12 @@
             downloadAppBtn.addEventListener('click', () => {
                 window.location.href = 'https://median.co/share/pkbqrw#apk';
             });
+
+            // Event Listener for the new in-app install button
+            installAppInAppBtn.addEventListener('click', () => {
+                window.location.href = 'https://median.co/share/pkbqrw#apk';
+            });
+
 
             projWidth = parseInt(localStorage.getItem('projectWidth')) || 800;
             projHeight = parseInt(localStorage.getItem('projectHeight')) || 600;
@@ -2671,4 +2734,3 @@
     </script>
 </body>
 </html>
-�
