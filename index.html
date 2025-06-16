@@ -13,6 +13,24 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            background-color: #f3f4f6; /* gray-100 */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        #mainContainer {
+            display: flex;
+            width: 100%;
+            max-width: 96rem; /* Equivalent to max-w-7xl from Tailwind, a bit more generous */
+            background-color: #ffffff;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+            overflow: hidden;
+            flex-grow: 1;
+            margin: 1rem; /* Adjust margin for overall container */
         }
         #drawingCanvas {
             background-color: #ffffff;
@@ -23,13 +41,6 @@
             height: 100%;
             touch-action: none;
         }
-        .flex-grow-container {
-            flex-grow: 1;
-            min-height: 0;
-        }
-        .overflow-y-auto-custom {
-            overflow-y: auto;
-        }
         #staticToolbox {
             flex-shrink: 0;
             width: 256px;
@@ -38,6 +49,19 @@
             padding: 1rem;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: #9ca3af #f9fafb;
+        }
+        #staticToolbox::-webkit-scrollbar {
+            width: 8px;
+        }
+        #staticToolbox::-webkit-scrollbar-track {
+            background: #f9fafb;
+        }
+        #staticToolbox::-webkit-scrollbar-thumb {
+            background-color: #9ca3af;
+            border-radius: 10px;
+            border: 2px solid #f9fafb;
         }
         .toolbox-section {
             padding-top: 0.75rem;
@@ -64,10 +88,38 @@
         .toolbox-section input[type="range"] {
             width: 100%;
             height: 0.5rem;
+            background: #d1d5db; /* Tailwind gray-300 */
+            border-radius: 9999px; /* Full rounded */
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+        }
+        .toolbox-section input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 1rem; /* 16px */
+            height: 1rem; /* 16px */
+            border-radius: 50%;
+            background: #2563eb; /* Tailwind blue-700 */
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            margin-top: -0.25rem; /* Center thumb vertically */
+        }
+        .toolbox-section input[type="range"]::-moz-range-thumb {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         .toolbox-section input[type="color"] {
             width: 100%;
             height: 2.5rem;
+            border-radius: 0.5rem;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
         }
         .tool-button {
             padding: 0.625rem 0.75rem;
@@ -80,6 +132,16 @@
             align-items: center;
             flex-grow: 1;
             min-width: 50px;
+            background-color: #e2e8f0;
+            color: #4b5563;
+        }
+        .tool-button:hover {
+            background-color: #cbd5e0;
+        }
+        .tool-button.active-tool {
+            background-color: #3b82f6;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .zoom-info {
             font-size: 0.875rem;
@@ -119,6 +181,9 @@
         }
         .help-icon:hover {
             background-color: #6b7280;
+        }
+        .frame-button {
+            opacity: 0.7; /* Slightly faded when not active */
         }
         .frame-button.dragging {
             opacity: 0.5;
@@ -178,116 +243,341 @@
         .bg-upload-button:hover {
             background-color: #3b82f6;
         }
-        /* New button for in-app install */
         #installAppInAppBtn {
             position: fixed;
             bottom: 1rem;
             right: 1rem;
-            background-color: #10B981; /* Green-600 */
+            background-color: #10B981;
             color: white;
             padding: 0.75rem 1.5rem;
-            border-radius: 9999px; /* Fully rounded */
+            border-radius: 9999px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             font-weight: 600;
             transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
             z-index: 100;
-            display: none; /* Hidden by default */
+            display: none;
         }
         #installAppInAppBtn:hover {
-            background-color: #059669; /* Green-700 */
+            background-color: #059669;
             transform: translateY(-2px);
         }
         #installAppInAppBtn:active {
             transform: translateY(0);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        /* Styles for small square Undo/Redo buttons */
         .history-button-small {
-            width: 2rem; /* 32px */
-            height: 2rem; /* 32px */
+            width: 2rem;
+            height: 2rem;
             padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
-            border-radius: 0.375rem; /* rounded-md */
-            font-size: 1rem; /* Adjust emoji size */
+            border-radius: 0.375rem;
+            font-size: 1rem;
             line-height: 1;
-            background-color: #e2e8f0; /* gray-200 */
-            color: #4b5563; /* gray-700 */
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+            background-color: #e2e8f0;
+            color: #4b5563;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             transition: background-color 0.2s ease-in-out;
             cursor: pointer;
         }
         .history-button-small:hover {
-            background-color: #cbd5e0; /* gray-300 */
+            background-color: #cbd5e0;
         }
         .history-button-small:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
+
+        /* Timeline Scroll Indicators (Shadows) */
+        #timelineContainer {
+            position: relative;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        #timelineContainer::-webkit-scrollbar {
+            display: none;
+        }
+        #timelineContainer::before,
+        #timelineContainer::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 20px;
+            pointer-events: none;
+            z-index: 10;
+            opacity: var(--left-shadow-opacity, 0);
+            transition: opacity 0.3s ease-in-out;
+        }
+        #timelineContainer::before {
+            left: 0;
+            box-shadow: inset 20px 0 10px -10px rgba(0, 0, 0, 0.2);
+        }
+        #timelineContainer::after {
+            right: 0;
+            box-shadow: inset -20px 0 10px -10px rgba(0, 0, 0, 0.2);
+            opacity: var(--right-shadow-opacity, 1);
+        }
+
+        /* Modals universal close button */
+        .modal-close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #6b7280;
+            cursor: pointer;
+            transition: color 0.2s ease-in-out;
+        }
+        .modal-close-button:hover {
+            color: #ef4444;
+        }
+
+        /* Modal Transitions */
+        .modal-overlay {
+            transition: opacity 0.3s ease-out;
+            opacity: 0;
+        }
+        .modal-overlay.open {
+            opacity: 1;
+        }
+        .modal-content {
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            transform: translateY(20px) scale(0.95);
+            opacity: 0;
+        }
+        .modal-overlay.open .modal-content {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+
+        /* Active Frame Border Animation */
+        .frame-button.active-frame {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+            animation: pulse-border 1.5s infinite alternate ease-in-out;
+            opacity: 1; /* Ensure active frame is fully opaque */
+        }
+        .frame-button:not(.active-frame):hover {
+             opacity: 1; /* Show full opacity on hover for non-active frames */
+        }
+
+        @keyframes pulse-border {
+            from {
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+            }
+            to {
+                box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.8);
+            }
+        }
+
+        /* Input Focus States */
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        }
+
+        /* Tooltip styles */
+        [data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            background-color: #333;
+            color: #fff;
+            padding: 5px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            z-index: 1000;
+            bottom: calc(100% + 5px);
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+        }
+
+        /* GIF Export Loading Indicator */
+        #exportGifLoading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 1.5rem 2rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 600;
+            z-index: 2000;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #exportGifLoading .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Mobile Refined Layout Specific Styles */
+        @media (max-width: 767px) {
+            #mainContainer {
+                flex-direction: column;
+                margin: 0.5rem;
+            }
+            #staticToolbox {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e5e7eb;
+                padding: 0.75rem;
+                max-height: 50vh; /* Allow toolbox to scroll if content is long */
+            }
+            .main-content-area {
+                flex-grow: 1;
+                padding: 0.75rem;
+            }
+            .playback-controls-area {
+                flex-direction: column;
+                align-items: center;
+                gap: 0.5rem;
+            }
+            .playback-controls-area > div {
+                margin-top: 0.5rem;
+            }
+            .playback-controls-area h3 {
+                margin-bottom: 0.5rem;
+            }
+        }
+        /* Styles for refined mobile layout (default for small screens) */
+        body.mobile-refined-layout #staticToolbox {
+            order: 0; /* Move toolbox to the top */
+        }
+        body.mobile-refined-layout #mainCanvasArea {
+            order: 1; /* Move canvas area below toolbox */
+        }
+        body.mobile-refined-layout #playbackControls {
+            order: 2; /* Move playback controls to the bottom if desired */
+        }
+        body.mobile-refined-layout .playback-in-toolbox {
+            display: flex; /* Show playback controls in toolbox */
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        body.mobile-refined-layout .playback-in-main-area {
+            display: none; /* Hide playback controls from main area */
+        }
+        body.mobile-refined-layout .frame-navigation-in-toolbox {
+            display: flex; /* Show frame navigation in toolbox */
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .playback-in-toolbox, .frame-navigation-in-toolbox {
+            display: none; /* Hidden by default */
+        }
     </style>
 </head>
-<body class="h-screen bg-gray-100 flex flex-col items-center p-4 sm:p-6 md:p-8">
+<body class="h-screen flex flex-col items-center p-4 sm:p-6 md:p-8">
 
     <div id="messageDisplay" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md transition-opacity duration-500 opacity-0 z-1000 hidden"></div>
 
-    <!-- Undo/Redo buttons moved to top-right -->
-    <div class="fixed top-4 right-4 z-50 flex space-x-2">
-        <button id="undoBtn" class="history-button-small">↩️</button>
-        <button id="redoBtn" class="history-button-small">↪️</button>
+    <!-- Undo/Redo buttons & Frame Number moved to top-right -->
+    <div class="fixed top-4 right-4 z-50 flex items-center space-x-2">
+        <span id="currentFrameNumberDisplay" class="text-gray-700 font-semibold text-sm">F1/1</span>
+        <button id="undoBtn" class="history-button-small" data-tooltip="Undo Last Action">↩️</button>
+        <button id="redoBtn" class="history-button-small" data-tooltip="Redo Last Action">↪️</button>
     </div>
 
-    <div class="flex w-full max-w-6xl bg-white rounded-xl shadow-lg overflow-hidden flex-grow flex-grow-container">
+    <div id="mainContainer" class="flex flex-grow">
         <div id="staticToolbox">
             <div class="flex flex-col space-y-4">
                 <div class="toolbox-section">
                     <h2>Tools</h2>
                     <div class="flex flex-wrap gap-1">
-                        <button id="pencilTool" class="tool-button bg-blue-600 text-white shadow-md">✏️</button>
-                        <button id="eraserTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">🩹</button>
-                        <button id="fillTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">🪣</button>
-                        <button id="eyedropperTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">💉</button>
-                        <button id="panTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">✋</button>
-                        <button id="textTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">🅰️</button>
-                        <button id="lassoTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">🪢</button>
-                        <button id="editTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">✂️</button>
-                        <button id="resizeTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">📏</button>
-                        <button id="stickerTool" class="tool-button bg-gray-200 text-gray-700 hover:bg-blue-100">✨</button>
+                        <button id="pencilTool" class="tool-button active-tool" data-tooltip="Pencil (Double-click for brush styles)">✏️</button>
+                        <button id="eraserTool" class="tool-button" data-tooltip="Eraser">🩹</button>
+                        <button id="fillTool" class="tool-button" data-tooltip="Fill Bucket">🪣</button>
+                        <button id="eyedropperTool" class="tool-button" data-tooltip="Eyedropper">💉</button>
+                        <button id="panTool" class="tool-button" data-tooltip="Pan Canvas">✋</button>
+                        <button id="textTool" class="tool-button" data-tooltip="Add Text">🅰️</button>
+                        <button id="lassoTool" class="tool-button" data-tooltip="Lasso Selection">🪢</button>
+                        <button id="editTool" class="tool-button" data-tooltip="Move Selection">✂️</button>
+                        <button id="resizeTool" class="tool-button" data-tooltip="Resize Selection">📏</button>
+                        <button id="stickerTool" class="tool-button" data-tooltip="Add Sticker">✨</button>
                     </div>
                     <div class="mt-4 flex items-center">
-                        <input type="checkbox" id="stylusOnlyModeToggle" class="mr-2 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                        <input type="checkbox" id="stylusOnlyModeToggle" class="mr-2 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" data-tooltip="Enable Palm Rejection">
                         <label for="stylusOnlyModeToggle" class="text-sm font-medium text-gray-700">Palm Rejection</label>
-                        <span id="palmRejectionHelpIcon" class="help-icon">?</span>
+                        <span id="palmRejectionHelpIcon" class="help-icon" data-tooltip="What is Palm Rejection?">?</span>
                     </div>
                 </div>
 
                 <div class="toolbox-section">
                     <label for="brushColor">Brush Color:</label>
-                    <input type="color" id="brushColor" value="#000000" class="rounded-lg border-2 border-gray-300 cursor-pointer">
+                    <input type="color" id="brushColor" value="#000000" class="rounded-lg border-2 border-gray-300 cursor-pointer" data-tooltip="Select Brush Color">
                 </div>
 
                 <div class="toolbox-section">
                     <label for="brushSize">Size: <span id="brushSizeValue" class="font-bold">5px</span></label>
-                    <input type="range" id="brushSize" min="1" max="50" value="5" class="bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                    <input type="range" id="brushSize" min="1" max="50" value="5" class="bg-gray-300 rounded-lg appearance-none cursor-pointer" data-tooltip="Adjust Brush Size">
                 </div>
 
                 <div class="toolbox-section">
                     <label for="opacitySlider">Opacity: <span id="opacityValue" class="font-bold">100%</span></label>
-                    <input type="range" id="opacitySlider" min="0" max="100" value="100" class="bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                    <input type="range" id="opacitySlider" min="0" max="100" value="100" class="bg-gray-300 rounded-lg appearance-none cursor-pointer" data-tooltip="Adjust Brush Opacity">
                 </div>
 
                 <div id="watercolorFlowSection" class="toolbox-section hidden">
                     <label for="flowSlider">Flow: <span id="flowValue" class="font-bold">50%</span></label>
-                    <input type="range" id="flowSlider" min="0" max="100" value="50" class="bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                    <input type="range" id="flowSlider" min="0" max="100" value="50" class="bg-gray-300 rounded-lg appearance-none cursor-pointer" data-tooltip="Adjust Watercolor Flow">
+                </div>
+
+                <!-- Playback Controls in Toolbox (for Refined Mobile) -->
+                <div id="playbackControlsInToolbox" class="toolbox-section playback-in-toolbox">
+                    <h2>Playback</h2>
+                    <div class="flex gap-2">
+                        <button id="playBtnToolbox" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200" data-tooltip="Play Animation">🎬</button>
+                        <button id="pauseBtnToolbox" class="bg-orange-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-orange-700 transition-colors duration-200" data-tooltip="Pause Animation">⏸️</button>
+                        <button id="stopBtnToolbox" class="bg-red-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-red-700 transition-colors duration-200" data-tooltip="Stop Animation">🛑</button>
+                    </div>
+                    <div class="flex items-center gap-2 mt-2">
+                        <label for="animationSpeedToolbox">FPS:</label>
+                        <input type="range" id="animationSpeedToolbox" min="1" max="30" value="10" class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer" data-tooltip="Adjust Animation Speed">
+                        <span id="animationSpeedValueToolbox" class="font-bold text-gray-800">10</span>
+                    </div>
+                </div>
+
+                <!-- Frame Navigation in Toolbox (for Refined Mobile) -->
+                <div id="frameNavigationInToolbox" class="toolbox-section frame-navigation-in-toolbox">
+                    <h2>Frame Navigation</h2>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="goToFirstFrameBtn" class="bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-400 text-sm" data-tooltip="Go to First Frame">⏮️ First</button>
+                        <button id="goToLastFrameBtn" class="bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-400 text-sm" data-tooltip="Go to Last Frame">⏭️ Last</button>
+                        <button id="goToPreviousFrameBtn" class="bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-400 text-sm" data-tooltip="Go to Previous Frame">⬅️ Previous</button>
+                        <button id="goToNextFrameBtn" class="bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-400 text-sm" data-tooltip="Go to Next Frame">➡️ Next</button>
+                    </div>
                 </div>
 
                 <div class="toolbox-section">
                     <h2>Background</h2>
                     <input type="file" id="uploadBackground" accept="image/*" class="hidden">
-                    <button id="uploadBackgroundBtn" class="bg-upload-button w-full mb-2">
+                    <button id="uploadBackgroundBtn" class="bg-upload-button w-full mb-2" data-tooltip="Upload Background Image">
                         Upload Image
                     </button>
-                    <button id="clearBackgroundBtn" class="bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-400 text-sm w-full">
+                    <button id="clearBackgroundBtn" class="bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-400 text-sm w-full" data-tooltip="Clear Current Background">
                         Clear Background
                     </button>
                 </div>
@@ -295,33 +585,22 @@
                 <div class="toolbox-section">
                     <h2>Frames</h2>
                     <div class="flex flex-col space-y-1">
-                        <button id="addFrame" class="bg-blue-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-blue-600 text-sm">Add New</button>
-                        <button id="deleteFrame" class="bg-red-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-red-600 text-sm">Delete</button>
-                        <button id="duplicateFrame" class="bg-green-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-green-600 text-sm">Duplicate</button>
-                        <button id="clearCurrentFrame" class="bg-orange-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-orange-600 text-sm">Clear Frame</button>
+                        <button id="addFrame" class="bg-blue-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-blue-600 text-sm" data-tooltip="Add New Frame">Add New</button>
+                        <button id="deleteFrame" class="bg-red-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-red-600 text-sm" data-tooltip="Delete Current Frame">Delete</button>
+                        <button id="duplicateFrame" class="bg-green-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-green-600 text-sm" data-tooltip="Duplicate Current Frame">Duplicate</button>
+                        <button id="clearCurrentFrame" class="bg-orange-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-orange-600 text-sm" data-tooltip="Clear Drawing on Current Frame">Clear Frame</button>
                     </div>
                 </div>
-
-                <!-- History section removed as buttons are moved -->
-                <!--
-                <div class="toolbox-section">
-                    <h2>History</h2>
-                    <div class="flex flex-col space-y-1">
-                        <button id="undoBtn" class="bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-400 text-sm" disabled>↩️ Undo</button>
-                        <button id="redoBtn" class="bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-400 text-sm" disabled>↪️ Redo</button>
-                    </div>
-                </div>
-                -->
 
                 <div class="toolbox-section">
                     <h2>Project</h2>
                     <div class="flex flex-col space-y-1">
-                        <button id="saveProject" class="bg-indigo-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-indigo-600 text-sm">Save</button>
-                        <button id="loadProject" class="bg-purple-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-purple-600 text-sm">Load</button>
-                        <button id="exportGif" class="bg-teal-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-teal-600 text-sm">
+                        <button id="saveProject" class="bg-indigo-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-indigo-600 text-sm" data-tooltip="Save Project to Browser">Save</button>
+                        <button id="loadProject" class="bg-purple-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-purple-600 text-sm" data-tooltip="Load Project from Browser">Load</button>
+                        <button id="exportGif" class="bg-teal-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-teal-600 text-sm" data-tooltip="Export Animation as GIF">
                             🖼️ Export GIF
                         </button>
-                        <button id="customizeBtn" class="bg-gray-400 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-500 text-sm w-full">
+                        <button id="customizeBtn" class="bg-gray-400 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-500 text-sm w-full" data-tooltip="Customize Canvas Size">
                             ⚙️ Customize
                         </button>
                     </div>
@@ -329,7 +608,7 @@
 
                 <div class="toolbox-section">
                     <h2>Ideas</h2>
-                    <button id="generateIdeaBtn" class="bg-yellow-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-yellow-600 text-sm w-full">
+                    <button id="generateIdeaBtn" class="bg-yellow-500 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-yellow-600 text-sm w-full" data-tooltip="Generate Drawing Idea with AI">
                         ✨ Generate Idea
                     </button>
                 </div>
@@ -337,41 +616,50 @@
                 <div class="toolbox-section">
                     <h2>Info</h2>
                     <div class="flex flex-col space-y-1">
-                        <button id="helpBtn" class="bg-gray-400 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-500 text-sm w-full">
+                        <button id="helpBtn" class="bg-gray-400 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-500 text-sm w-full" data-tooltip="View Help Tips">
                             ❓ Help
                         </button>
-                        <button id="faqBtn" class="bg-gray-400 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-500 text-sm w-full">
+                        <button id="faqBtn" class="bg-gray-400 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-500 text-sm w-full" data-tooltip="Frequently Asked Questions">
                             ❓ FAQ
                         </button>
-                        <button id="updatesBtn" class="bg-gray-400 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-500 text-sm w-full">
+                        <button id="updatesBtn" class="bg-gray-400 text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-500 text-sm w-full" data-tooltip="View Latest Updates">
                             ✨ Updates
                         </button>
                     </div>
                 </div>
+
+                <!-- Download App Button (for Android Mobile Refined Layout) -->
+                <div id="downloadAppContainer" class="toolbox-section hidden">
+                    <button id="downloadAppBtnLeftbar" class="bg-green-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-green-700 transition-colors duration-200 w-full" data-tooltip="Download ToonStart App">
+                        Download App
+                    </button>
+                </div>
+
             </div>
         </div>
 
-        <div class="flex flex-col relative flex-grow p-4 sm:p-6">
+        <div id="mainCanvasArea" class="flex flex-col relative flex-grow p-4 sm:p-6">
             <div class="flex-grow flex justify-center items-center relative">
                 <canvas id="drawingCanvas"></canvas>
             </div>
 
-            <div class="mt-4 p-4 bg-gray-100 rounded-lg shadow-inner flex flex-col sm:flex-row items-center justify-center gap-4">
+            <!-- Playback Controls in Main Area (default for desktop/tablet) -->
+            <div id="playbackControlsMain" class="mt-4 p-4 bg-gray-100 rounded-lg shadow-inner flex flex-col sm:flex-row items-center justify-center gap-4 playback-in-main-area">
                 <h3 class="text-lg font-semibold text-gray-700">Playback:</h3>
                 <div class="flex gap-2">
-                    <button id="playBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200">
+                    <button id="playBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200" data-tooltip="Play Animation">
                         🎬
                     </button>
-                    <button id="pauseBtn" class="bg-orange-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-orange-700 transition-colors duration-200">
+                    <button id="pauseBtn" class="bg-orange-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-orange-700 transition-colors duration-200" data-tooltip="Pause Animation">
                         ⏸️
                     </button>
-                    <button id="stopBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-red-700 transition-colors duration-200">
+                    <button id="stopBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-red-700 transition-colors duration-200" data-tooltip="Stop Animation">
                         🛑
                     </button>
                 </div>
                 <div class="flex items-center gap-2 mt-2 sm:mt-0">
                     <label for="animationSpeed">FPS:</label>
-                    <input type="range" id="animationSpeed" min="1" max="30" value="10" class="w-24 h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                    <input type="range" id="animationSpeed" min="1" max="30" value="10" class="w-24 h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer" data-tooltip="Adjust Animation Speed">
                     <span id="animationSpeedValue" class="font-bold text-gray-800">10</span>
                 </div>
             </div>
@@ -385,8 +673,50 @@
         </div>
     </div>
 
-    <div id="ideaModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md flex flex-col" style="max-height: 90vh;">
+    <!-- GIF Export Loading Indicator -->
+    <div id="exportGifLoading" class="hidden">
+        <div class="spinner"></div>
+        <p>Generating GIF...</p>
+        <span id="exportProgressText">0%</span>
+    </div>
+
+    <div id="mobileWarningModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 modal-overlay hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm text-center relative modal-content">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">👋 You are on Mobile!</h3>
+            <p class="text-gray-700 mb-6">
+                For a better experience, we recommend switching to a tablet or desktop.
+            </p>
+            <div class="flex flex-col space-y-4">
+                <button id="continueMobileBtn" class="bg-blue-600 text-white px-4 py-3 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200">
+                    Continue on Mobile
+                </button>
+                <button id="refineForMobileBtn" class="bg-purple-600 text-white px-4 py-3 rounded-lg shadow-md hover:bg-purple-700 transition-colors duration-200 relative">
+                    Refine for Mobile
+                    <span id="refineHelpIcon" class="help-icon absolute -right-6 top-1/2 -translate-y-1/2" data-tooltip="What does 'Refine for Mobile' do?">?</span>
+                </button>
+                <button id="quitAppBtn" class="bg-gray-300 text-gray-800 px-4 py-3 rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-200">
+                    Quit App
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="refineHelpModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 modal-overlay hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm relative modal-content">
+            <button class="modal-close-button" id="closeRefineHelpModalBtnTop" data-tooltip="Close">✖️</button>
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">📱 Refine for Mobile</h3>
+            <p class="text-gray-700 mb-4">
+                This option optimizes the interface for smaller screens by moving playback and advanced navigation controls into a dedicated sidebar, providing a more streamlined experience on mobile devices.
+            </p>
+            <button id="closeRefineHelpModalBtn" class="mt-6 w-full bg-gray-300 text-gray-800 px-4 py-3 rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-200">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <div id="ideaModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 modal-overlay hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md flex flex-col relative modal-content" style="max-height: 90vh;">
+            <button class="modal-close-button" id="closeIdeaModalBtnTop" data-tooltip="Close">✖️</button>
             <h3 class="text-2xl font-bold text-gray-800 mb-4 flex-shrink-0">✨ Generate Frame Idea</h3>
             <p class="text-gray-600 mb-4 flex-shrink-0">
                 Describe what kind of idea you're looking for, e.g., "a character running through a forest," or "a magical creature appearing."
@@ -407,14 +737,15 @@
         </div>
     </div>
 
-    <div id="helpModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md flex flex-col" style="max-height: 90vh;">
+    <div id="helpModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 modal-overlay hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md flex flex-col relative modal-content" style="max-height: 90vh;">
+            <button class="modal-close-button" id="closeHelpModalBtnTop" data-tooltip="Close">✖️</button>
             <h3 class="2xl font-bold text-gray-800 mb-4 flex-shrink-0">❓ Help & View Tips</h3>
-            <div class="flex-grow overflow-y-auto pr-2">
+            <div class="flex-grow overflow-y-auto pr-2 py-2">
                 <p class="zoom-info mb-4">
                     If parts of the editor content appear cut off or you want to see more, you can adjust your browser's zoom level.
                 </p>
-                <ul class="zoom-info list-disc list-inside space-y-2">
+                <ul class="zoom-info list-disc list-inside space-y-2 pl-4">
                     <li>
                         <span class="font-semibold">Browser Zoom Out:</span>
                         <br>
@@ -457,7 +788,7 @@
                         <span class="font-semibold">Edit Tool (✂️):</span> After using the Lasso tool, select the 'Edit' tool. Click and drag on the canvas to move your lassoed selection. Click again to place it.
                     </li>
                     <li>
-                        <span class="font-semibold">Resize Tool (📏):</span> After using the Lasso tool, select the 'Resize' tool. A modal will appear allowing you to input new dimensions for your lassoed selection. After applying, click on the canvas to place it.
+                        <span class="font-semibold">Resize Tool (�):</span> After using the Lasso tool, select the 'Resize' tool. A modal will appear allowing you to input new dimensions for your lassoed selection. After applying, click on the canvas to place it.
                     </li>
                     <li>
                         <span class="font-semibold">Sticker Tool (✨):</span> Select the 'Sticker' tool to open a menu of emojis. Choose an emoji and then click on the canvas to place it.
@@ -481,8 +812,9 @@
         </div>
     </div>
 
-    <div id="palmRejectionHelpModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+    <div id="palmRejectionHelpModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 modal-overlay hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md relative modal-content">
+            <button class="modal-close-button" id="closePalmRejectionHelpModalBtnTop" data-tooltip="Close">✖️</button>
             <h3 class="2xl font-bold text-gray-800 mb-4">🖐️ What is Palm Rejection?</h3>
             <p class="text-gray-700 mb-4">
                 When "Palm Rejection" is enabled, the drawing canvas will <strong>only respond to input from a digital pen or stylus</strong>.
@@ -499,10 +831,65 @@
         </div>
     </div>
 
-    <div id="updatesModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md flex flex-col" style="max-height: 90vh;">
+    <div id="updatesModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 modal-overlay hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md flex flex-col relative modal-content" style="max-height: 90vh;">
+            <button class="modal-close-button" id="closeUpdatesModalBtnTop" data-tooltip="Close">✖️</button>
             <h3 class="text-2xl font-bold text-gray-800 mb-4 flex-shrink-0">✨ ToonStart Updates</h3>
-            <div id="updatesContent" class="text-gray-700 space-y-4 flex-grow overflow-y-auto">
+            <div id="updatesContent" class="text-gray-700 space-y-4 flex-grow overflow-y-auto pr-2 py-2">
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700">June 16, 2025 - Critical Fix & Mobile Layout</h4>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><strong>Critical Fix:</strong> Re-generated the entire application to resolve "black screen" and closing issues.</li>
+                        <li><strong>Mobile Warning:</strong> Added an initial warning for mobile users recommending tablet/desktop.
+                            <ul>
+                                <li>Options: "Continue on Mobile", "Refine for Mobile", "Quit App".</li>
+                            </ul>
+                        </li>
+                        <li><strong>Refined Mobile Layout:</strong>
+                            <ul>
+                                <li>Playback options moved to the Leftbar.</li>
+                                <li>New frame navigation options added to Leftbar: "Go to First/Last/Previous/Next Frame".</li>
+                                <li>Current frame number display added next to Undo/Redo buttons (e.g., "F1/10").</li>
+                                <li>"Refine for Mobile" option explanation via a '?' help icon.</li>
+                                <li>"Download App" button added to Leftbar (Android only, for users who choose to "Continue on Mobile").</li>
+                                <li>This refined layout can also be enabled by desktop users via the Customize tab.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700">June 16, 2025 - Upcoming UI Fixes (Phase 2)</h4>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><strong>Refined Modal Transitions:</strong> Implementing smoother fade-in/fade-out and slight scale animations for all modals.</li>
+                        <li><strong>Highlight Current Frame with Border Animation:</strong> The active frame in the timeline will now have a subtle pulsating border or more prominent highlight.</li>
+                        <li><strong>Improved Input Field Focus States:</strong> Providing clearer visual indication when an input field is in focus (e.g., brush size, opacity, text input).</li>
+                        <li><strong>Tooltips for Buttons:</strong> Adding simple tooltips for all action buttons (tools, frames, project actions) on hover to clarify their function.</li>
+                        <li><strong>Loading Indicator for GIF Export:</strong> Displaying a more visually engaging loading indicator or progress bar specifically for the GIF export process.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700">June 15, 2025 - Upcoming UI Fixes (Phase 1)</h4>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><strong>Toolbox Scrollbar Styling:</strong> Implementing a more subtle and visually integrated vertical scrollbar in the toolbox.</li>
+                        <li><strong>Timeline Scroll Indicators:</strong> Adding visual cues (e.g., subtle shadows) to the horizontal timeline to indicate scrollability when content overflows.</li>
+                        <li><strong>Consistent Tool Button States:</strong> Refining hover and active states for all tool buttons for clearer visual feedback and consistency.</li>
+                        <li><strong>Universal Modal Close Buttons:</strong> Adding a consistent "✖️" close button in the top-right corner of all modals for improved accessibility.</li>
+                        <li><strong>Improved Modal Content Padding:</strong> Adjusting padding within the content areas of help and update modals for better readability and a less cramped appearance.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg text-blue-700">June 15, 2025 - UI Refinements & Mobile Gestures</h4>
+                    <ul class="list-disc list-inside ml-4 text-sm">
+                        <li><strong>Cleaner UI:</strong> Removed the "ToonStart Animation Editor" text from the main display for a cleaner look.</li>
+                        <li><strong>Mobile Undo/Redo Gestures:</strong>
+                            <ul>
+                                <li>Double-tap on the canvas to undo.</li>
+                                <li>Triple-tap on the canvas to redo.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Compact Undo/Redo Buttons:</strong> Moved Undo (↩️) and Redo (↪️) buttons to the top-right corner, making them small and square using emoji icons to save space.</li>
+                    </ul>
+                </div>
                 <div>
                     <h4 class="font-semibold text-lg text-blue-700">May 31, 2025 - Backgrounds & No Layers</h4>
                     <ul class="list-disc list-inside ml-4 text-sm">
@@ -752,8 +1139,9 @@
         </div>
     </div>
 
-    <div id="customizeModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+    <div id="customizeModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 modal-overlay hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md relative modal-content">
+            <button class="modal-close-button" id="closeCustomizeModalBtnTop" data-tooltip="Close">✖️</button>
             <h3 class="text-2xl font-bold text-gray-800 mb-4">⚙️ Customize Editor</h3>
             <div class="space-y-4">
                 <div>
@@ -772,6 +1160,12 @@
                 <button id="resetCanvasSizeBtn" class="w-full bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-200">
                     Reset to Default (800x600)
                 </button>
+                <div class="border-t border-gray-200 pt-4 mt-4">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="enableRefinedMobileLayoutToggle" class="mr-2 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                        <label for="enableRefinedMobileLayoutToggle" class="text-sm font-medium text-gray-700">Enable Refined Mobile Layout</label>
+                    </div>
+                </div>
             </div>
             <button id="closeCustomizeModalBtn" class="mt-6 w-full bg-gray-300 text-gray-800 px-4 py-3 rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-200">
                 Close
@@ -779,8 +1173,9 @@
         </div>
     </div>
 
-    <div id="brushSelectionModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-xs">
+    <div id="brushSelectionModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 modal-overlay hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-xs relative modal-content">
+            <button class="modal-close-button" id="closeBrushSelectionModalBtnTop" data-tooltip="Close">✖️</button>
             <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Choose Brush</h3>
             <div class="flex flex-col space-y-3">
                 <button id="selectBrushTool" class="bg-blue-500 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-blue-600">Brush</button>
@@ -794,8 +1189,9 @@
         </div>
     </div>
 
-    <div id="textToolModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md flex flex-col">
+    <div id="textToolModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 modal-overlay hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md flex flex-col relative modal-content">
+            <button class="modal-close-button" id="cancelTextBtnTop" data-tooltip="Cancel">✖️</button>
             <h3 class="text-2xl font-bold text-gray-800 mb-4">🅰️ Add Text</h3>
             <textarea id="textInput" class="w-full p-3 border border-gray-300 rounded-lg mb-4 h-24 resize-y focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type your text here..."></textarea>
             
@@ -843,8 +1239,9 @@
         </div>
     </div>
 
-    <div id="resizeSelectionModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+    <div id="resizeSelectionModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 modal-overlay hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md relative modal-content">
+            <button class="modal-close-button" id="cancelResizeBtnTop" data-tooltip="Cancel">✖️</button>
             <h3 class="text-2xl font-bold text-gray-800 mb-4">Resize Selection</h3>
             <div class="space-y-4">
                 <div>
@@ -867,8 +1264,9 @@
         </div>
     </div>
 
-    <div id="stickerSelectionModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg flex flex-col">
+    <div id="stickerSelectionModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 modal-overlay hidden">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg flex flex-col relative modal-content">
+            <button class="modal-close-button" id="closeStickerSelectionModalBtnTop" data-tooltip="Close">✖️</button>
             <h3 class="text-2xl font-bold text-gray-800 mb-4">Choose a Sticker</h3>
             <div id="stickerContainer" class="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 overflow-y-auto max-h-96 pb-4">
             </div>
@@ -878,26 +1276,8 @@
         </div>
     </div>
 
-    <!-- Mobile App Prompt Modal -->
-    <div id="mobileAppPromptModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm text-center">
-            <h3 class="text-2xl font-bold text-gray-800 mb-4">👋 You're on mobile!</h3>
-            <p class="text-gray-700 mb-6">
-                Do you want to download the ToonStart app for a better experience?
-            </p>
-            <div class="flex flex-col space-y-4">
-                <button id="continueWebBtn" class="bg-blue-600 text-white px-4 py-3 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200">
-                    Continue on Web
-                </button>
-                <button id="downloadAppBtn" class="bg-green-600 text-white px-4 py-3 rounded-lg shadow-md hover:bg-green-700 transition-colors duration-200">
-                    Download App
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- New floating button for in-app install -->
-    <button id="installAppInAppBtn" class="hidden">
+    <button id="installAppInAppBtn" class="hidden" data-tooltip="Install ToonStart App">
         Install ToonStart App
     </button>
 
@@ -912,7 +1292,10 @@
         let projHeight = 600;
 
         const msgDisplay = document.getElementById('messageDisplay');
+        const currentFrameNumberDisplay = document.getElementById('currentFrameNumberDisplay');
 
+
+        // Tool Buttons
         const pencilToolBtn = document.getElementById('pencilTool');
         const eraserToolBtn = document.getElementById('eraserTool');
         const fillToolBtn = document.getElementById('fillTool');
@@ -924,6 +1307,7 @@
         const resizeToolBtn = document.getElementById('resizeTool');
         const stickerToolBtn = document.getElementById('stickerTool');
 
+        // Brush/Color/Opacity
         const brushColorInput = document.getElementById('brushColor');
         const brushSizeInput = document.getElementById('brushSize');
         const brushSizeValueSpan = document.getElementById('brushSizeValue');
@@ -933,31 +1317,55 @@
         const flowSlider = document.getElementById('flowSlider');
         const flowValueSpan = document.getElementById('flowValue');
 
+        // Stylus Mode
         const stylusOnlyModeToggle = document.getElementById('stylusOnlyModeToggle');
         let isStylusOnlyModeEnabled = false;
 
+        // Background
         const uploadBackgroundInput = document.getElementById('uploadBackground');
         const uploadBackgroundBtn = document.getElementById('uploadBackgroundBtn');
         const clearBackgroundBtn = document.getElementById('clearBackgroundBtn');
 
+        // Frame Management
         const addFrameBtn = document.getElementById('addFrame');
         const deleteFrameBtn = document.getElementById('deleteFrame');
         const duplicateFrameBtn = document.getElementById('duplicateFrame');
         const clearCurrentFrameBtn = document.getElementById('clearCurrentFrame');
 
+        // Project Actions
         const saveProjectBtn = document.getElementById('saveProject');
         const loadProjectBtn = document.getElementById('loadProject');
         const exportGifBtn = document.getElementById('exportGif');
+        const exportGifLoading = document.getElementById('exportGifLoading');
+        const exportProgressText = document.getElementById('exportProgressText');
 
+
+        // Playback Controls (Main Area & Toolbox)
         const playBtn = document.getElementById('playBtn');
         const pauseBtn = document.getElementById('pauseBtn');
         const stopBtn = document.getElementById('stopBtn');
         const animSpeedInput = document.getElementById('animationSpeed');
         const animSpeedValueSpan = document.getElementById('animationSpeedValue');
 
+        const playBtnToolbox = document.getElementById('playBtnToolbox');
+        const pauseBtnToolbox = document.getElementById('pauseBtnToolbox');
+        const stopBtnToolbox = document.getElementById('stopBtnToolbox');
+        const animSpeedInputToolbox = document.getElementById('animationSpeedToolbox');
+        const animSpeedValueToolboxSpan = document.getElementById('animationSpeedValueToolbox');
+
+
+        // Timeline
         const timelineDiv = document.getElementById('timeline');
         const timelineContainer = document.getElementById('timelineContainer');
 
+        // Frame Navigation (for Refined Mobile)
+        const goToFirstFrameBtn = document.getElementById('goToFirstFrameBtn');
+        const goToLastFrameBtn = document.getElementById('goToLastFrameBtn');
+        const goToPreviousFrameBtn = document.getElementById('goToPreviousFrameBtn');
+        const goToNextFrameBtn = document.getElementById('goToNextFrameBtn');
+
+
+        // AI Idea Generator
         const generateIdeaBtn = document.getElementById('generateIdeaBtn');
         const ideaModal = document.getElementById('ideaModal');
         const ideaPromptInput = document.getElementById('ideaPromptInput');
@@ -965,34 +1373,51 @@
         const generatedIdeaOutput = document.getElementById('generatedIdeaOutput');
         const ideaText = document.getElementById('ideaText');
         const closeIdeaModalBtn = document.getElementById('closeIdeaModalBtn');
+        const closeIdeaModalBtnTop = document.getElementById('closeIdeaModalBtnTop');
 
+
+        // Help & Info Modals
         const helpBtn = document.getElementById('helpBtn');
         const helpModal = document.getElementById('helpModal');
         const closeHelpModalBtn = document.getElementById('closeHelpModalBtn');
+        const closeHelpModalBtnTop = document.getElementById('closeHelpModalBtnTop');
+
         const faqBtn = document.getElementById('faqBtn');
         const updatesBtn = document.getElementById('updatesBtn');
         const updatesModal = document.getElementById('updatesModal');
         const closeUpdatesModalBtn = document.getElementById('closeUpdatesModalBtn');
+        const closeUpdatesModalBtnTop = document.getElementById('closeUpdatesModalBtnTop');
 
         const palmRejectionHelpIcon = document.getElementById('palmRejectionHelpIcon');
         const palmRejectionHelpModal = document.getElementById('palmRejectionHelpModal');
         const closePalmRejectionHelpModalBtn = document.getElementById('closePalmRejectionHelpModalBtn');
+        const closePalmRejectionHelpModalBtnTop = document.getElementById('closePalmRejectionHelpModalBtnTop');
 
+
+        // Customize Modal
         const customizeBtn = document.getElementById('customizeBtn');
         const customizeModal = document.getElementById('customizeModal');
         const closeCustomizeModalBtn = document.getElementById('closeCustomizeModalBtn');
+        const closeCustomizeModalBtnTop = document.getElementById('closeCustomizeModalBtnTop');
+
         const projectWidthInput = document.getElementById('projectWidth');
         const projectHeightInput = document.getElementById('projectHeight');
         const applyCanvasSizeBtn = document.getElementById('applyCanvasSizeBtn');
         const resetCanvasSizeBtn = document.getElementById('resetCanvasSizeBtn');
+        const enableRefinedMobileLayoutToggle = document.getElementById('enableRefinedMobileLayoutToggle');
 
+
+        // Brush Selection Modal
         const brushSelectionModal = document.getElementById('brushSelectionModal');
         const selectBrushToolBtn = document.getElementById('selectBrushTool');
         const selectPenToolBtn = document.getElementById('selectPenTool');
         const selectPencilToolBtn = document.getElementById('selectPencilTool');
         const selectWatercolorToolBtn = document.getElementById('selectWatercolorTool');
         const closeBrushSelectionModalBtn = document.getElementById('closeBrushSelectionModalBtn');
+        const closeBrushSelectionModalBtnTop = document.getElementById('closeBrushSelectionModalBtnTop');
 
+
+        // Text Tool Modal
         const textToolModal = document.getElementById('textToolModal');
         const textInput = document.getElementById('textInput');
         const fontFamilySelect = document.getElementById('fontFamilySelect');
@@ -1003,21 +1428,37 @@
         const textPreviewCtx = textPreviewCanvas.getContext('2d');
         const placeTextBtn = document.getElementById('placeTextBtn');
         const cancelTextBtn = document.getElementById('cancelTextBtn');
+        const cancelTextBtnTop = document.getElementById('cancelTextBtnTop');
 
+
+        // Resize Selection Modal
         const resizeSelectionModal = document.getElementById('resizeSelectionModal');
         const resizeWidthInput = document.getElementById('resizeWidth');
         const resizeHeightInput = document.getElementById('resizeHeight');
         const applyResizeBtn = document.getElementById('applyResizeBtn');
         const cancelResizeBtn = document.getElementById('cancelResizeBtn');
+        const cancelResizeBtnTop = document.getElementById('cancelResizeBtnTop');
 
+
+        // Sticker Selection Modal
         const stickerSelectionModal = document.getElementById('stickerSelectionModal');
         const stickerContainer = document.getElementById('stickerContainer');
         const closeStickerSelectionModalBtn = document.getElementById('closeStickerSelectionModalBtn');
+        const closeStickerSelectionModalBtnTop = document.getElementById('closeStickerSelectionModalBtnTop');
+
 
         // Mobile App Prompt elements
-        const mobileAppPromptModal = document.getElementById('mobileAppPromptModal');
-        const continueWebBtn = document.getElementById('continueWebBtn');
-        const downloadAppBtn = document.getElementById('downloadAppBtn');
+        const mobileWarningModal = document.getElementById('mobileWarningModal');
+        const continueMobileBtn = document.getElementById('continueMobileBtn');
+        const refineForMobileBtn = document.getElementById('refineForMobileBtn');
+        const quitAppBtn = document.getElementById('quitAppBtn');
+        const refineHelpIcon = document.getElementById('refineHelpIcon');
+        const refineHelpModal = document.getElementById('refineHelpModal');
+        const closeRefineHelpModalBtn = document.getElementById('closeRefineHelpModalBtn');
+        const closeRefineHelpModalBtnTop = document.getElementById('closeRefineHelpModalBtnTop');
+        const downloadAppBtnLeftbar = document.getElementById('downloadAppBtnLeftbar');
+        const downloadAppContainer = document.getElementById('downloadAppContainer');
+
 
         // New in-app install button
         const installAppInAppBtn = document.getElementById('installAppInAppBtn');
@@ -1032,7 +1473,7 @@
         let brushSize = 5;
         let currentOpacity = 100;
         let watercolorFlow = 50;
-        let currentTool = 'brush';
+        let currentTool = 'brush'; // Default tool
 
         let framesData = [];
         let currentFrameIdx = 0;
@@ -1071,6 +1512,8 @@
         let awaitingStickerPlacement = false;
         let stickerToPlace = null;
 
+        let mobileRefinedMode = false; // State for refined mobile layout
+
         // For mobile tap gestures
         let lastTapTime = 0;
         let tapCount = 0;
@@ -1105,7 +1548,7 @@
             { emoji: '🍳', size: 50 }, { emoji: '🥓', size: 50 }, { emoji: '🍔', size: 50 },
             { emoji: '🍟', size: 50 }, { emoji: '🌭', size: 50 }, { emoji: '🥪', size: 50 },
             { emoji: '🌮', size: 50 }, { emoji: '🌯', size: 50 }, { emoji: '🥙', size: 50 },
-            { emoji: '�', size: 50 }, { emoji: '🍩', size: 50 }, { emoji: '🍪', size: 50 },
+            { emoji: '🍦', size: 50 }, { emoji: '🍩', size: 50 }, { emoji: '🍪', size: 50 },
             { emoji: '🎂', size: 50 }, { emoji: '🍰', size: 50 }, { emoji: '🧁', size: 50 },
             { emoji: '🥧', size: 50 }, { emoji: '🍫', size: 50 }, { emoji: '🍬', size: 50 },
             { emoji: '🍭', size: 50 }, { emoji: '🍮', size: 50 }, { emoji: '🍯', size: 50 },
@@ -1163,6 +1606,23 @@
             }, 2000);
         }
 
+        // Function to open a modal
+        function openModal(modalElement) {
+            modalElement.classList.remove('hidden');
+            setTimeout(() => {
+                modalElement.classList.add('open');
+            }, 10);
+        }
+
+        // Function to close a modal
+        function closeModal(modalElement) {
+            modalElement.classList.remove('open');
+            modalElement.addEventListener('transitionend', function handler() {
+                modalElement.classList.add('hidden');
+                modalElement.removeEventListener('transitionend', handler);
+            }, { once: true });
+        }
+
         function hexToRgba(hex) {
             const r = parseInt(hex.slice(1, 3), 16);
             const g = parseInt(hex.slice(3, 5), 16);
@@ -1209,7 +1669,7 @@
                 framesData = JSON.parse(JSON.stringify(historyStates[historyPtr]));
                 loadFrameIntoBuffer().then(renderCanvasDisplay);
                 updateTimelineDisplay();
-                updateBackgroundButtons();
+                updateFrameNumberDisplay();
                 updateUndoRedoButtons();
                 showUserMessage('Undo successful!');
             }
@@ -1221,7 +1681,7 @@
                 framesData = JSON.parse(JSON.stringify(historyStates[historyPtr]));
                 loadFrameIntoBuffer().then(renderCanvasDisplay);
                 updateTimelineDisplay();
-                updateBackgroundButtons();
+                updateFrameNumberDisplay();
                 updateUndoRedoButtons();
                 showUserMessage('Redo successful!');
             }
@@ -1230,6 +1690,10 @@
         function updateUndoRedoButtons() {
             undoBtn.disabled = !(historyPtr > 0);
             redoBtn.disabled = !(historyPtr < historyStates.length - 1);
+        }
+
+        function updateFrameNumberDisplay() {
+            currentFrameNumberDisplay.textContent = `F${currentFrameIdx + 1}/${framesData.length}`;
         }
 
         async function loadFrameIntoBuffer() {
@@ -1388,7 +1852,7 @@
                 brushColorInput.value = brushColor;
                 bufferCtx.strokeStyle = brushColor;
                 
-                currentTool = 'brush';
+                currentTool = 'brush'; // Reset to brush after picking color
                 updateToolButtonStates();
                 showUserMessage('Color picked!');
                 return;
@@ -1432,14 +1896,15 @@
                 }
             }
 
+            // Drawing tools setup
             bufferCtx.lineCap = 'round';
             bufferCtx.lineJoin = 'round';
             bufferCtx.strokeStyle = brushColor;
             bufferCtx.lineWidth = brushSize;
-            bufferCtx.globalCompositeOperation = 'source-over';
+            bufferCtx.globalCompositeOperation = 'source-over'; // Default for drawing
 
-            bufferCtx.shadowBlur = 0;
-            bufferCtx.shadowColor = 'transparent';
+            bufferCtx.shadowBlur = 0; // Reset shadow
+            bufferCtx.shadowColor = 'transparent'; // Reset shadow color
 
             if (currentTool === 'pencil') {
                 bufferCtx.globalAlpha = (currentOpacity / 100) * 0.4;
@@ -1540,28 +2005,25 @@
                 const currentTime = new Date().getTime();
                 const tapInterval = currentTime - lastTapTime;
 
-                if (tapInterval < TAP_TIMEOUT && tapInterval > 0) { // Check for consecutive taps
+                if (tapInterval < TAP_TIMEOUT && tapInterval > 0) {
                     tapCount++;
                 } else {
-                    tapCount = 1; // Start new tap count
+                    tapCount = 1;
                 }
                 lastTapTime = currentTime;
 
                 if (tapCount === 2) {
-                    // Double tap for Undo
-                    setTimeout(() => { // Small delay to allow for triple tap detection
-                        if (tapCount === 2) { // Confirm it's still 2 taps after delay
+                    setTimeout(() => {
+                        if (tapCount === 2) {
                             performUndo();
-                            tapCount = 0; // Reset after action
+                            tapCount = 0;
                         }
                     }, TAP_TIMEOUT);
                 } else if (tapCount === 3) {
-                    // Triple tap for Redo
                     performRedo();
-                    tapCount = 0; // Reset after action
+                    tapCount = 0;
                 }
             }
-
 
             if (currentTool === 'lasso') {
                 if (isLassoing) {
@@ -1572,17 +2034,19 @@
                     } else {
                         showUserMessage('Lasso selection too small. Try again.');
                     }
-                    currentTool = 'brush';
+                    currentTool = 'brush'; // Reset to brush after lassoing
                     updateToolButtonStates();
                     renderCanvasDisplay();
                     return;
                 }
             }
 
+            // For drawing tools (pencil, brush, pen, watercolor, eraser)
             if (currentTool !== 'fill' && currentTool !== 'eyedropper' && currentTool !== 'pan' &&
                 currentTool !== 'edit' && currentTool !== 'resize' && currentTool !== 'sticker') {
                 if (drawingActive) {
                     bufferCtx.closePath();
+                    // Reset drawing context properties to default for next stroke
                     bufferCtx.globalCompositeOperation = 'source-over';
                     bufferCtx.globalAlpha = 1.0;
                     bufferCtx.shadowBlur = 0;
@@ -1605,19 +2069,19 @@
 
             const getPixelColor = (x, y) => {
                 if (x < 0 || x >= width || y < 0 || y >= height) return [-1, -1, -1, -1];
-                const index = (y * width + x) * 4;
+                const index = (Math.floor(y) * width + Math.floor(x)) * 4;
                 return [pixels[index], pixels[index + 1], pixels[index + 2], pixels[index + 3]];
             };
 
             const setPixelColor = (x, y, color) => {
-                const index = (y * width + x) * 4;
+                const index = (Math.floor(y) * width + Math.floor(x)) * 4;
                 pixels[index] = color[0];
                 pixels[index + 1] = color[1];
                 pixels[index + 2] = color[2];
                 pixels[index + 3] = color[3];
             };
 
-            const startColor = getPixelColor(Math.floor(startX), Math.floor(startY));
+            const startColor = getPixelColor(startX, startY);
 
             if (startColor[0] === -1 || (startColor[0] === fillColor[0] &&
                 startColor[1] === fillColor[1] &&
@@ -1667,9 +2131,11 @@
                 );
                 
                 if (index === currentFrameIdx) {
-                    frameButton.classList.add('border-blue-600', 'bg-blue-100', 'text-blue-800', 'shadow-md', 'scale-105');
+                    frameButton.classList.add('active-frame', 'bg-blue-100', 'text-blue-800', 'shadow-md', 'scale-105');
+                    frameButton.classList.remove('border-gray-300', 'bg-white', 'text-gray-600', 'hover:border-blue-400');
                 } else {
                     frameButton.classList.add('border-gray-300', 'bg-white', 'text-gray-600', 'hover:border-blue-400');
+                    frameButton.classList.remove('active-frame', 'bg-blue-100', 'text-blue-800', 'shadow-md', 'scale-105');
                 }
                 
                 frameButton.onclick = () => {
@@ -1677,7 +2143,7 @@
                     currentFrameIdx = index;
                     loadFrameIntoBuffer().then(renderCanvasDisplay);
                     updateTimelineDisplay();
-                    updateBackgroundButtons();
+                    updateFrameNumberDisplay();
                 };
 
                 frameButton.draggable = true;
@@ -1692,7 +2158,31 @@
 
                 timelineDiv.appendChild(frameButton);
             });
+            updateTimelineScrollShadows();
+            updateFrameNumberDisplay();
         }
+
+        function updateTimelineScrollShadows() {
+            const container = timelineContainer;
+            // Use scrollWidth and clientWidth of the inner content for accurate calculation
+            const contentWidth = timelineDiv.scrollWidth;
+            const viewportWidth = container.clientWidth;
+            const scrollLeft = container.scrollLeft;
+
+            // Only show left shadow if scrolled right more than a few pixels
+            container.style.setProperty('--left-shadow-opacity', scrollLeft > 5 ? '1' : '0');
+
+            // Only show right shadow if there's content to scroll to the right
+            // Add a small tolerance (e.g., 5px) to prevent flicker at the end
+            container.style.setProperty('--right-shadow-opacity', (scrollLeft + viewportWidth) < (contentWidth - 5) ? '1' : '0');
+
+            // If content does not overflow the container, hide both shadows
+            if (contentWidth <= viewportWidth) {
+                container.style.setProperty('--left-shadow-opacity', '0');
+                container.style.setProperty('--right-shadow-opacity', '0');
+            }
+        }
+
 
         function handleDragStart(e) {
             draggedFrameIndex = parseInt(e.target.dataset.frameIndex);
@@ -1726,12 +2216,15 @@
                 return;
             }
 
-            const currentFrameContent = framesData[currentFrameIdx];
+            // Save current frame data before reordering to ensure it's up-to-date
+            saveCurrentFrameDrawingData();
+            
+            const currentFrameContent = framesData[currentFrameIdx]; // Get reference to content of current frame before splice
 
             const [draggedFrame] = framesData.splice(draggedIndex, 1);
             framesData.splice(droppedOnIndex, 0, draggedFrame);
 
-            currentFrameIdx = framesData.indexOf(currentFrameContent);
+            currentFrameIdx = framesData.indexOf(currentFrameContent); // Find new index of previously active frame
 
             updateTimelineDisplay();
             loadFrameIntoBuffer().then(renderCanvasDisplay);
@@ -1763,7 +2256,7 @@
 
             loadFrameIntoBuffer().then(renderCanvasDisplay);
             updateTimelineDisplay();
-            updateBackgroundButtons();
+            updateFrameNumberDisplay();
             saveStateToHistory();
             showUserMessage('New frame added!');
         }
@@ -1780,7 +2273,7 @@
 
             loadFrameIntoBuffer().then(renderCanvasDisplay);
             updateTimelineDisplay();
-            updateBackgroundButtons();
+            updateFrameNumberDisplay();
             saveStateToHistory();
             showUserMessage('Frame deleted!');
         }
@@ -1796,7 +2289,7 @@
 
             loadFrameIntoBuffer().then(renderCanvasDisplay);
             updateTimelineDisplay();
-            updateBackgroundButtons();
+            updateFrameNumberDisplay();
             saveStateToHistory();
             showUserMessage('Frame duplicated!');
         }
@@ -1811,7 +2304,6 @@
             };
 
             loadFrameIntoBuffer().then(renderCanvasDisplay);
-            updateBackgroundButtons();
             saveStateToHistory();
             showUserMessage('Current frame cleared!');
         }
@@ -1824,6 +2316,7 @@
             localStorage.setItem('projectHeight', projHeight.toString());
             localStorage.setItem('currentOpacity', currentOpacity.toString());
             localStorage.setItem('watercolorFlow', watercolorFlow.toString());
+            localStorage.setItem('mobileRefinedMode', mobileRefinedMode.toString()); // Save refined mode state
             showUserMessage('Animation project saved!');
         }
 
@@ -1834,6 +2327,8 @@
             const savedProjectHeight = localStorage.getItem('projectHeight');
             const savedOpacity = localStorage.getItem('currentOpacity');
             const savedFlow = localStorage.getItem('watercolorFlow');
+            const savedMobileRefinedMode = localStorage.getItem('mobileRefinedMode');
+
 
             if (!savedProjectData) {
                 showUserMessage('No saved animation project found! Start drawing something new.');
@@ -1871,13 +2366,18 @@
                     opacityValueSpan.textContent = `${currentOpacity}%`;
                     flowSlider.value = watercolorFlow;
                     flowValueSpan.textContent = `${watercolorFlow}%`;
+
+                    // Load refined mobile mode state
+                    mobileRefinedMode = savedMobileRefinedMode === 'true';
+                    enableRefinedMobileLayoutToggle.checked = mobileRefinedMode;
+                    updateRefinedMobileLayout();
                     
                     historyStates = [];
                     historyPtr = -1;
                     saveStateToHistory();
                     loadFrameIntoBuffer().then(renderCanvasDisplay);
                     updateTimelineDisplay();
-                    updateBackgroundButtons();
+                    updateFrameNumberDisplay();
                     showUserMessage('Animation project loaded successfully!');
                 } else {
                     showUserMessage('Hmm, saved project data seems a bit off or empty.');
@@ -1904,12 +2404,15 @@
                 currentFrameIdx = (currentFrameIdx + 1) % framesData.length;
                 loadFrameIntoBuffer().then(renderCanvasDisplay);
                 updateTimelineDisplay();
-                updateBackgroundButtons();
+                updateFrameNumberDisplay();
             }, frameDelay);
             
             playBtn.disabled = true;
             pauseBtn.disabled = false;
             stopBtn.disabled = false;
+            playBtnToolbox.disabled = true;
+            pauseBtnToolbox.disabled = false;
+            stopBtnToolbox.disabled = false;
             showUserMessage('Playing animation...');
         }
 
@@ -1921,6 +2424,8 @@
             animPlaying = false;
             playBtn.disabled = false;
             pauseBtn.disabled = true;
+            playBtnToolbox.disabled = false;
+            pauseBtnToolbox.disabled = true;
             showUserMessage('Animation paused.');
         }
 
@@ -1929,10 +2434,13 @@
             currentFrameIdx = 0;
             loadFrameIntoBuffer().then(renderCanvasDisplay);
             updateTimelineDisplay();
-            updateBackgroundButtons();
+            updateFrameNumberDisplay();
             playBtn.disabled = false;
             pauseBtn.disabled = true;
             stopBtn.disabled = true;
+            playBtnToolbox.disabled = false;
+            pauseBtnToolbox.disabled = true;
+            stopBtnToolbox.disabled = true;
             showUserMessage('Animation stopped.');
         }
 
@@ -1949,8 +2457,9 @@
 
             exporting = true;
             exportProg = 0;
-            exportGifBtn.textContent = 'Exporting GIF... 0%';
             exportGifBtn.disabled = true;
+            exportGifLoading.style.display = 'flex'; // Show loading indicator
+            exportProgressText.textContent = '0%';
             showUserMessage('Generating GIF, this might take a moment...');
 
             const gifEncoder = new GIF({
@@ -1996,7 +2505,7 @@
 
             gifEncoder.on('progress', function(p) {
                 exportProg = Math.floor(p * 100);
-                exportGifBtn.textContent = `Exporting GIF... ${exportProg}%`;
+                exportProgressText.textContent = `${exportProg}%`;
             });
 
             gifEncoder.on('finished', function(blob) {
@@ -2011,8 +2520,8 @@
 
                 exporting = false;
                 exportProg = 0;
-                exportGifBtn.textContent = '🖼️ Export GIF';
                 exportGifBtn.disabled = false;
+                exportGifLoading.style.display = 'none'; // Hide loading indicator
                 showUserMessage('GIF exported successfully!');
             });
 
@@ -2020,8 +2529,8 @@
                 console.error('GIF generation failed:', error);
                 exporting = false;
                 exportProg = 0;
-                exportGifBtn.textContent = '🖼️ Export GIF';
                 exportGifBtn.disabled = false;
+                exportGifLoading.style.display = 'none'; // Hide loading indicator
                 showUserMessage('Error exporting GIF.');
             });
 
@@ -2088,18 +2597,17 @@
             ];
             
             allToolButtons.forEach(btn => {
-                btn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
+                btn.classList.remove('active-tool');
+                btn.classList.remove('bg-blue-600', 'text-white', 'shadow-md'); 
                 btn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
             });
 
             if (['brush', 'pen', 'pencil', 'watercolor'].includes(currentTool)) {
-                pencilToolBtn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-                pencilToolBtn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
+                pencilToolBtn.classList.add('active-tool');
             } else {
                 const currentToolButton = document.getElementById(`${currentTool}Tool`);
                 if (currentToolButton) {
-                    currentToolButton.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-blue-100');
-                    currentToolButton.classList.add('bg-blue-600', 'text-white', 'shadow-md');
+                    currentToolButton.classList.add('active-tool');
                 }
             }
 
@@ -2157,7 +2665,7 @@
                 tempCanvas.height = newHeight;
                 tempCtx.imageSmoothingEnabled = true;
 
-                tempCtx.clearRect(0, 0, newWidth, newHeight); // Ensure transparency
+                tempCtx.clearRect(0, 0, newWidth, newHeight);
 
                 if (oldFrame.imageData && oldFrame.imageData.startsWith('data:image/png;base64,')) {
                     try {
@@ -2182,7 +2690,7 @@
             await loadFrameIntoBuffer();
             renderCanvasDisplay();
             updateTimelineDisplay();
-            updateBackgroundButtons();
+            updateFrameNumberDisplay();
             saveStateToHistory();
             showUserMessage(`Canvas successfully resized to ${newWidth}x${newHeight}!`);
         }
@@ -2299,7 +2807,7 @@
                 stickerButton.addEventListener('click', () => {
                     stickerToPlace = sticker;
                     awaitingStickerPlacement = true;
-                    stickerSelectionModal.classList.add('hidden');
+                    closeModal(stickerSelectionModal);
                     showUserMessage(`Click on the canvas to place ${sticker.emoji} sticker.`);
                     currentTool = 'sticker';
                     updateToolButtonStates();
@@ -2316,13 +2824,8 @@
                 framesData[currentFrameIdx].background = null;
             }
             renderCanvasDisplay();
-            updateBackgroundButtons();
             saveStateToHistory();
             showUserMessage(imageSrc ? 'Background set!' : 'Background cleared!');
-        }
-
-        function updateBackgroundButtons() {
-            // No longer needed to update pre-built buttons as they are removed
         }
 
         /**
@@ -2349,44 +2852,100 @@
          * It considers screen size, user agent, if it's an Android device, and if it's already in the Median app.
          * @returns {boolean} True if the mobile app prompt should be shown, false otherwise.
          */
-        function shouldShowMobileAppPrompt() {
+        function shouldShowMobileWarningModal() {
             const screenWidth = window.innerWidth;
             const userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
-            // Factor 1: Screen size (common breakpoint for mobile devices)
-            const isSmallScreen = screenWidth < 768; // Adjust threshold as needed
+            const isSmallScreen = screenWidth < 768; // Common breakpoint for mobile devices
 
-            // Factor 2: User Agent String for common mobile OS/browsers
+            // Check for common mobile OS/browsers, but exclude tablet patterns
             const isMobileUA = /(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|rim)|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(userAgent) || /1207|6310|6590|3gso|4thc|501i|503i|504i|505i|506i|6270|7060|7290|7370|7420|7430|8300|8101|8102|8150|8170|8180|8190|9003|9025|9590|sync|alcatel|amoi|android|aptu|aurora|ašenas|avaya|blackberry|benq|brvm|cdm-|cellpad|cingular|cmc-|cldc-|cmd-|coool|cybo|daco|dhp|dmob|do(c|t)|ebmco|ercu|eudoraweb|fly|fennec|htc|iemobile|ibook|kddi|kgt|kinhin|kpt |kwc-|kyo(c|k)|le(no|xi)|lg( g5|b0|ke|pn|si)|lenovo|maemo|midp|mobi|mozilla|netfront|nestscape|nitro|nokia|palm|pana|pantone|philips|phone|pg(0|x)|pda|plucker|pocket|psp|qtek|qwap|sagem|sams(atc|us)|sgh-|shar|sie-|siemens|softbank|sony|spa|tcl-|tdg-|tel(i|m)|tim-|t-mobile|toplc|ts(v|w)|user|vodafone|wap|wonu|xda|xyzzy|zte/i.test(userAgent.substr(0, 4));
             
-            // Show prompt if it's a small screen or mobile UA, AND it's an Android device, AND NOT the Median app.
-            return (isSmallScreen || isMobileUA) && isAndroidDevice() && !isMedianApp();
+            // iPad and most Android tablets don't typically include "mobile" in UA but have "iPad" or "Android"
+            const isTabletUA = /iPad|Android(?!.*Mobile)/i.test(userAgent);
+
+            // Show warning if it's a small screen OR a mobile UA (excluding tablet patterns explicitly), AND NOT a Median app.
+            // Only show if the user hasn't explicitly chosen to continue on web previously.
+            return (isSmallScreen || isMobileUA) && !isTabletUA && !isMedianApp() && !sessionStorage.getItem('choseToContinueOnWeb');
+        }
+
+        // Applies or removes the 'mobile-refined-layout' class to the body
+        function updateRefinedMobileLayout() {
+            if (mobileRefinedMode) {
+                document.body.classList.add('mobile-refined-layout');
+                document.getElementById('playbackControlsInToolbox').style.display = 'block';
+                document.getElementById('frameNavigationInToolbox').style.display = 'block';
+                document.getElementById('playbackControlsMain').style.display = 'none'; // Hide desktop playback controls
+                if (isAndroidDevice() && sessionStorage.getItem('choseToContinueOnWeb') === 'true') {
+                    downloadAppContainer.classList.remove('hidden');
+                }
+            } else {
+                document.body.classList.remove('mobile-refined-layout');
+                document.getElementById('playbackControlsInToolbox').style.display = 'none';
+                document.getElementById('frameNavigationInToolbox').style.display = 'none';
+                document.getElementById('playbackControlsMain').style.display = 'flex'; // Show desktop playback controls
+                downloadAppContainer.classList.add('hidden');
+            }
+            // Ensure FPS values are in sync regardless of which input is visible
+            animSpeedInput.value = fps;
+            animSpeedValueSpan.textContent = fps;
+            animSpeedInputToolbox.value = fps;
+            animSpeedValueToolboxSpan.textContent = fps;
         }
 
         window.onload = async function() {
-            // Check if mobile prompt has already been shown in this session AND if it should be shown
-            if (!sessionStorage.getItem('mobileAppPromptShown') && shouldShowMobileAppPrompt()) {
-                mobileAppPromptModal.classList.remove('hidden');
-                // Store that the prompt has been shown to avoid repeated display in the same session
-                sessionStorage.setItem('mobileAppPromptShown', 'true');
+            // Check if mobile warning should be shown on initial load
+            if (shouldShowMobileWarningModal()) {
+                openModal(mobileWarningModal);
+            } else {
+                // If not showing warning, apply saved or default layout
+                mobileRefinedMode = localStorage.getItem('mobileRefinedMode') === 'true';
+                enableRefinedMobileLayoutToggle.checked = mobileRefinedMode;
+                updateRefinedMobileLayout();
             }
 
-            // Show "Install App" button if running inside Median app
+            // Show "Install App" button if running inside Median app AND it's an Android device
             if (isMedianApp() && isAndroidDevice()) {
                 installAppInAppBtn.classList.remove('hidden');
             } else {
                 installAppInAppBtn.classList.add('hidden');
             }
 
-
-            // Event Listeners for the mobile app prompt modal
-            continueWebBtn.addEventListener('click', () => {
-                mobileAppPromptModal.classList.add('hidden');
+            // Event Listeners for the mobile warning modal
+            continueMobileBtn.addEventListener('click', () => {
+                sessionStorage.setItem('choseToContinueOnWeb', 'true'); // User chose to continue on web
+                closeModal(mobileWarningModal);
+                mobileRefinedMode = false; // Ensure not in refined mode by default
+                enableRefinedMobileLayoutToggle.checked = mobileRefinedMode;
+                updateRefinedMobileLayout();
             });
 
-            downloadAppBtn.addEventListener('click', () => {
-                window.location.href = 'https://median.co/share/pkbqrw#apk';
+            refineForMobileBtn.addEventListener('click', () => {
+                closeModal(mobileWarningModal);
+                mobileRefinedMode = true; // Enable refined mode
+                enableRefinedMobileLayoutToggle.checked = mobileRefinedMode;
+                updateRefinedMobileLayout();
             });
+
+            quitAppBtn.addEventListener('click', () => {
+                // For a web app, this might just close the tab or redirect.
+                // For a Median app, it could be a call to exit.
+                // alert('Exiting application. Goodbye!'); // Replaced with custom message box if needed
+                showUserMessage('Exiting application. Goodbye!');
+                window.close(); // Tries to close the window/tab
+            });
+
+            refineHelpIcon.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent parent button's click event
+                openModal(refineHelpModal);
+            });
+            closeRefineHelpModalBtn.addEventListener('click', () => {
+                closeModal(refineHelpModal);
+            });
+            closeRefineHelpModalBtnTop.addEventListener('click', () => {
+                closeModal(refineHelpModal);
+            });
+
 
             // Event Listener for the new in-app install button
             installAppInAppBtn.addEventListener('click', () => {
@@ -2417,17 +2976,20 @@
             bufferCtx.strokeStyle = brushColor;
             bufferCtx.lineWidth = brushSize;
             
+            // Set mainCanvas size after it's been mounted and has offset dimensions
             mainCanvas.width = mainCanvas.offsetWidth;
             mainCanvas.height = mainCanvas.offsetHeight;
 
             if (framesData.length === 0) {
                 bufferCtx.clearRect(0, 0, bufferCanvas.width, bufferCanvas.height);
-                const initialDrawingData = bufferCanvas.toDataURL('image/png');
+                const initialDrawingData = bufferCanvas.toDataURL('image/png'); // Changed from bufferCtx to bufferCanvas
                 framesData.push({
                     imageData: initialDrawingData,
                     background: null
                 });
-                saveStateToHistory();
+                saveStateToHistory(); // Save initial state to history
+            } else {
+                loadProject(); // Try to load saved project if available
             }
             
             await loadFrameIntoBuffer();
@@ -2436,40 +2998,31 @@
             updateTimelineDisplay();
             updateToolButtonStates();
             updateUndoRedoButtons();
-            updateBackgroundButtons();
+            updateFrameNumberDisplay();
 
             playBtn.disabled = false;
             pauseBtn.disabled = true;
             stopBtn.disabled = true;
+            playBtnToolbox.disabled = false;
+            pauseBtnToolbox.disabled = true;
+            stopBtnToolbox.disabled = true;
             exportGifBtn.disabled = false;
 
             populateStickerSelection();
 
+            // Tool button event listeners
             pencilToolBtn.addEventListener('dblclick', () => {
-                brushSelectionModal.classList.remove('hidden');
+                openModal(brushSelectionModal);
                 updateToolButtonStates();
             });
-
-            eraserToolBtn.addEventListener('click', () => {
-                currentTool = 'eraser';
-                updateToolButtonStates();
-            });
-            fillToolBtn.addEventListener('click', () => {
-                currentTool = 'fill';
-                updateToolButtonStates();
-            });
-            eyedropperToolBtn.addEventListener('click', () => {
-                currentTool = 'eyedropper';
-                updateToolButtonStates();
-            });
-            panToolBtn.addEventListener('click', () => {
-                currentTool = 'pan';
-                updateToolButtonStates();
-            });
+            eraserToolBtn.addEventListener('click', () => { currentTool = 'eraser'; updateToolButtonStates(); });
+            fillToolBtn.addEventListener('click', () => { currentTool = 'fill'; updateToolButtonStates(); });
+            eyedropperToolBtn.addEventListener('click', () => { currentTool = 'eyedropper'; updateToolButtonStates(); });
+            panToolBtn.addEventListener('click', () => { currentTool = 'pan'; updateToolButtonStates(); });
             textToolBtn.addEventListener('click', () => {
                 currentTool = 'text';
                 updateToolButtonStates();
-                textToolModal.classList.remove('hidden');
+                openModal(textToolModal);
                 updateTextPreview();
             });
             lassoToolBtn.addEventListener('click', () => {
@@ -2492,7 +3045,7 @@
                 currentTool = 'resize';
                 updateToolButtonStates();
                 if (selectedImageData) {
-                    resizeSelectionModal.classList.remove('hidden');
+                    openModal(resizeSelectionModal);
                     resizeWidthInput.value = selectedImageData.width;
                     resizeHeightInput.value = selectedImageData.height;
                 } else {
@@ -2502,7 +3055,7 @@
             stickerToolBtn.addEventListener('click', () => {
                 currentTool = 'sticker';
                 updateToolButtonStates();
-                stickerSelectionModal.classList.remove('hidden');
+                openModal(stickerSelectionModal);
             });
 
             stylusOnlyModeToggle.addEventListener('change', (e) => {
@@ -2524,6 +3077,7 @@
             opacitySlider.addEventListener('input', (e) => {
                 currentOpacity = parseInt(e.target.value);
                 opacityValueSpan.textContent = `${currentOpacity}%`;
+                // If drawing is active, update alpha immediately, otherwise it will be set on next stroke start
                 if (drawingActive) {
                     if (currentTool === 'pencil') {
                         bufferCtx.globalAlpha = (currentOpacity / 100) * 0.4;
@@ -2533,7 +3087,6 @@
                         bufferCtx.globalAlpha = (currentOpacity / 100) * 1.0;
                     } else if (currentTool === 'watercolor') {
                         bufferCtx.globalAlpha = (currentOpacity / 100) * (watercolorFlow / 100) * 0.1;
-                        bufferCtx.shadowBlur = brushSize * (watercolorFlow / 100) * 0.7;
                     }
                 }
             });
@@ -2562,18 +3115,36 @@
 
             addFrameBtn.addEventListener('click', addFrame);
             deleteFrameBtn.addEventListener('click', deleteFrame);
-            duplicateFrameBtn.addEventListener('click', duplicateFrame);
-            clearCurrentFrameBtn.addEventListener('click', clearCurrentFrame);
+duplicateFrameBtn.addEventListener('click', duplicateFrame);
+clearCurrentFrameBtn.addEventListener('click', clearCurrentFrame);
 
             saveProjectBtn.addEventListener('click', saveProject);
             loadProjectBtn.addEventListener('click', loadProject);
             exportGifBtn.addEventListener('click', exportGifAnimation);
 
+            // Playback controls (main area)
             playBtn.addEventListener('click', startAnimationPlayback);
             pauseBtn.addEventListener('click', pauseAnimationPlayback);
             stopBtn.addEventListener('click', stopAnimationPlayback);
             animSpeedInput.addEventListener('input', (e) => {
                 fps = parseInt(e.target.value);
+                animSpeedValueSpan.textContent = fps;
+                animSpeedInputToolbox.value = fps; // Sync with toolbox input
+                animSpeedValueToolboxSpan.textContent = fps;
+                if (animPlaying) {
+                    pauseAnimationPlayback();
+                    startAnimationPlayback();
+                }
+            });
+
+            // Playback controls (toolbox)
+            playBtnToolbox.addEventListener('click', startAnimationPlayback);
+            pauseBtnToolbox.addEventListener('click', pauseAnimationPlayback);
+            stopBtnToolbox.addEventListener('click', stopAnimationPlayback);
+            animSpeedInputToolbox.addEventListener('input', (e) => {
+                fps = parseInt(e.target.value);
+                animSpeedValueToolboxSpan.textContent = fps;
+                animSpeedInput.value = fps; // Sync with main area input
                 animSpeedValueSpan.textContent = fps;
                 if (animPlaying) {
                     pauseAnimationPlayback();
@@ -2581,6 +3152,50 @@
                 }
             });
 
+            // Frame Navigation Buttons
+            goToFirstFrameBtn.addEventListener('click', () => {
+                if (animPlaying) pauseAnimationPlayback();
+                currentFrameIdx = 0;
+                loadFrameIntoBuffer().then(renderCanvasDisplay);
+                updateTimelineDisplay();
+                updateFrameNumberDisplay();
+                showUserMessage('Go to first frame.');
+            });
+            goToLastFrameBtn.addEventListener('click', () => {
+                if (animPlaying) pauseAnimationPlayback();
+                currentFrameIdx = framesData.length - 1;
+                loadFrameIntoBuffer().then(renderCanvasDisplay);
+                updateTimelineDisplay();
+                updateFrameNumberDisplay();
+                showUserMessage('Go to last frame.');
+            });
+            goToPreviousFrameBtn.addEventListener('click', () => {
+                if (animPlaying) pauseAnimationPlayback();
+                if (currentFrameIdx > 0) {
+                    currentFrameIdx--;
+                } else {
+                    currentFrameIdx = framesData.length - 1; // Loop to end
+                }
+                loadFrameIntoBuffer().then(renderCanvasDisplay);
+                updateTimelineDisplay();
+                updateFrameNumberDisplay();
+                showUserMessage('Go to previous frame.');
+            });
+            goToNextFrameBtn.addEventListener('click', () => {
+                if (animPlaying) pauseAnimationPlayback();
+                if (currentFrameIdx < framesData.length - 1) {
+                    currentFrameIdx++;
+                } else {
+                    currentFrameIdx = 0; // Loop to start
+                }
+                loadFrameIntoBuffer().then(renderCanvasDisplay);
+                updateTimelineDisplay();
+                updateFrameNumberDisplay();
+                showUserMessage('Go to next frame.');
+            });
+
+
+            // Canvas interaction event listeners
             mainCanvas.addEventListener('mousedown', handleInteractionStart);
             mainCanvas.addEventListener('mousemove', handleInteractionMove);
             mainCanvas.addEventListener('mouseup', handleInteractionEnd);
@@ -2623,21 +3238,27 @@
             });
 
             generateIdeaBtn.addEventListener('click', () => {
-                ideaModal.classList.remove('hidden');
+                openModal(ideaModal);
                 generatedIdeaOutput.classList.add('hidden');
                 ideaText.textContent = '';
                 ideaPromptInput.value = '';
             });
             closeIdeaModalBtn.addEventListener('click', () => {
-                ideaModal.classList.add('hidden');
+                closeModal(ideaModal);
+            });
+            closeIdeaModalBtnTop.addEventListener('click', () => {
+                closeModal(ideaModal);
             });
             getIdeaBtn.addEventListener('click', generateFrameIdea);
 
             helpBtn.addEventListener('click', () => {
-                helpModal.classList.remove('hidden');
+                openModal(helpModal);
             });
             closeHelpModalBtn.addEventListener('click', () => {
-                helpModal.classList.add('hidden');
+                closeModal(helpModal);
+            });
+            closeHelpModalBtnTop.addEventListener('click', () => {
+                closeModal(helpModal);
             });
 
             faqBtn.addEventListener('click', () => {
@@ -2645,24 +3266,33 @@
             });
 
             palmRejectionHelpIcon.addEventListener('click', () => {
-                palmRejectionHelpModal.classList.remove('hidden');
+                openModal(palmRejectionHelpModal);
             });
             closePalmRejectionHelpModalBtn.addEventListener('click', () => {
-                palmRejectionHelpModal.classList.add('hidden');
+                closeModal(palmRejectionHelpModal);
+            });
+            closePalmRejectionHelpModalBtnTop.addEventListener('click', () => {
+                closeModal(palmRejectionHelpModal);
             });
 
             updatesBtn.addEventListener('click', () => {
-                updatesModal.classList.remove('hidden');
+                openModal(updatesModal);
             });
             closeUpdatesModalBtn.addEventListener('click', () => {
-                updatesModal.classList.add('hidden');
+                closeModal(updatesModal);
+            });
+            closeUpdatesModalBtnTop.addEventListener('click', () => {
+                closeModal(updatesModal);
             });
 
             customizeBtn.addEventListener('click', () => {
-                customizeModal.classList.remove('hidden');
+                openModal(customizeModal);
             });
             closeCustomizeModalBtn.addEventListener('click', () => {
-                customizeModal.classList.add('hidden');
+                closeModal(customizeModal);
+            });
+            closeCustomizeModalBtnTop.addEventListener('click', () => {
+                closeModal(customizeModal);
             });
 
             applyCanvasSizeBtn.addEventListener('click', () => {
@@ -2683,31 +3313,39 @@
                 showUserMessage('Canvas size reset to default (800x600).');
             });
 
+            enableRefinedMobileLayoutToggle.addEventListener('change', (e) => {
+                mobileRefinedMode = e.target.checked;
+                updateRefinedMobileLayout();
+            });
+
             undoBtn.addEventListener('click', performUndo);
             redoBtn.addEventListener('click', performRedo);
 
             selectBrushToolBtn.addEventListener('click', () => {
                 currentTool = 'brush';
                 updateToolButtonStates();
-                brushSelectionModal.classList.add('hidden');
+                closeModal(brushSelectionModal);
             });
             selectPenToolBtn.addEventListener('click', () => {
                 currentTool = 'pen';
                 updateToolButtonStates();
-                brushSelectionModal.classList.add('hidden');
+                closeModal(brushSelectionModal);
             });
             selectPencilToolBtn.addEventListener('click', () => {
                 currentTool = 'pencil';
                 updateToolButtonStates();
-                brushSelectionModal.classList.add('hidden');
+                closeModal(brushSelectionModal);
             });
             selectWatercolorToolBtn.addEventListener('click', () => {
                 currentTool = 'watercolor';
                 updateToolButtonStates();
-                brushSelectionModal.classList.add('hidden');
+                closeModal(brushSelectionModal);
             });
             closeBrushSelectionModalBtn.addEventListener('click', () => {
-                brushSelectionModal.classList.add('hidden');
+                closeModal(brushSelectionModal);
+            });
+            closeBrushSelectionModalBtnTop.addEventListener('click', () => {
+                closeModal(brushSelectionModal);
             });
 
             textInput.addEventListener('input', updateTextPreview);
@@ -2724,20 +3362,31 @@
                 const fontStyle = fontItalicToggle.checked ? 'italic' : 'normal';
                 textFont = `${fontWeight} ${fontStyle} ${fontSize}px ${fontFamily}`;
 
-                textToolModal.classList.add('hidden');
+                closeModal(textToolModal);
                 awaitingTextPlacement = true;
                 showUserMessage('Click on the canvas to place text.');
             });
 
             cancelTextBtn.addEventListener('click', () => {
-                textToolModal.classList.add('hidden');
+                closeModal(textToolModal);
+                awaitingTextPlacement = false;
+                currentTool = 'brush';
+                updateToolButtonStates();
+            });
+            cancelTextBtnTop.addEventListener('click', () => {
+                closeModal(textToolModal);
                 awaitingTextPlacement = false;
                 currentTool = 'brush';
                 updateToolButtonStates();
             });
 
             closeStickerSelectionModalBtn.addEventListener('click', () => {
-                stickerSelectionModal.classList.add('hidden');
+                closeModal(stickerSelectionModal);
+                currentTool = 'brush';
+                updateToolButtonStates();
+            });
+            closeStickerSelectionModalBtnTop.addEventListener('click', () => {
+                closeModal(stickerSelectionModal);
                 currentTool = 'brush';
                 updateToolButtonStates();
             });
@@ -2762,12 +3411,12 @@
                     isMovingSelection = true;
                     showUserMessage('Selection resized. Click to place or drag to move.');
                 }
-                resizeSelectionModal.classList.add('hidden');
+                closeModal(resizeSelectionModal);
                 renderCanvasDisplay();
             });
 
             cancelResizeBtn.addEventListener('click', () => {
-                resizeSelectionModal.classList.add('hidden');
+                closeModal(resizeSelectionModal);
                 if (selectedImageData) {
                     currentTool = 'edit';
                     isMovingSelection = true;
@@ -2778,6 +3427,19 @@
                 updateToolButtonStates();
                 renderCanvasDisplay();
             });
+            cancelResizeBtnTop.addEventListener('click', () => {
+                closeModal(resizeSelectionModal);
+                if (selectedImageData) {
+                    currentTool = 'edit';
+                    isMovingSelection = true;
+                    showUserMessage('Resize cancelled. Selection remains in edit mode.');
+                } else {
+                    currentTool = 'brush';
+                }
+                updateToolButtonStates();
+                renderCanvasDisplay();
+            });
+
 
             window.addEventListener('resize', () => {
                 saveCurrentFrameDrawingData();
@@ -2795,7 +3457,10 @@
                     
                     renderCanvasDisplay();
                 });
+                updateTimelineScrollShadows();
             });
+
+            timelineContainer.addEventListener('scroll', updateTimelineScrollShadows);
         };
     </script>
 </body>
